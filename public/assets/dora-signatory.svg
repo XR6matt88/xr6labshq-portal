@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <circle cx="120" cy="120" r="112" fill="#FFFFFF" />
+  <path d="M120,8 A112,112 0 0,1 199,41 L160,80 L120,45 Z" fill="#E51937" />
+  <path d="M199,41 A112,112 0 0,1 232,120 L180,120 L160,80 Z" fill="#F2859C" />
+  <path d="M232,120 A112,112 0 0,1 199,199 L160,160 L180,120 Z" fill="#0072CE" />
+  <path d="M199,199 A112,112 0 0,1 120,232 L120,180 L160,160 Z" fill="#3AB5E8" />
+  <path d="M120,232 A112,112 0 0,1 41,199 L80,160 L120,180 Z" fill="#00A651" />
+  <path d="M41,199 A112,112 0 0,1 8,120 L60,120 L80,160 Z" fill="#8DC63F" />
+  <path d="M8,120 A112,112 0 0,1 41,41 L80,80 L60,120 Z" fill="#FDB913" />
+  <path d="M41,41 A112,112 0 0,1 120,8 L120,45 L80,80 Z" fill="#F37021" />
+  <circle cx="120" cy="120" r="68" fill="#FFFFFF" />
+  <text x="120" y="106" font-family="Arial, sans-serif" font-size="18" font-weight="normal" fill="#333333" text-anchor="middle">Signatory of</text>
+  <text x="120" y="140" font-family="Arial, sans-serif" font-size="34" font-weight="bold" letter-spacing="2" fill="#222222" text-anchor="middle">DORA</text>
+</svg>
