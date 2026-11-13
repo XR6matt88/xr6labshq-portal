@@ -1,0 +1,95 @@
+<!DOCTYPE html> 
+<html lang="ms" class="dark"> 
+<head> 
+  <meta charset="UTF-8" /> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+  <title>XR6 Labs HQ – Research & Engineering</title> 
+  <link rel="preconnect" href="https://fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link 
+href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Roboto:wght@30
+0;400;500;700&display=swap" rel="stylesheet"> 
+  <link rel="stylesheet" href="/assets/site.css" /> 
+  <script src="https://cdn.tailwindcss.com"></script> 
+  <script>     tailwind.config = {       theme: {         extend: {           colors: {             xr6bg: '#081210', xr6card: '#0E1F1B', xr6border: '#1A3831',             xr6green: '#39E58C', xr6orange: '#FF6A00', xr6blue: '#9BBFFF',             xr6cyan: '#37DDF4', xr6gold: '#D7B46A', 
+          }, 
+          fontFamily: { sans: ['Roboto', 'sans-serif'], arabic: ['Amiri', 'serif'] } 
+        } 
+      } 
+    } 
+  </script> 
+</head> 
+<body class="min-h-screen flex flex-col justify-between antialiased bg-[#081210] text-[#F1F5F4]"> 
+  <header class="border-b border-xr6border bg-xr6bg/95 sticky top-0 z-50 backdrop-blur"> 
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between"> 
+      <a href="/" class="text-xl font-bold tracking-wider text-white flex items-center gap-3">         <img src="/assets/xr6-hq-logo.svg" alt="XR6 Labs HQ Logo" class="w-9 h-9 object-contain" /> 
+        <span>XR6 LABS HQ</span> 
+      </a> 
+      <nav class="hidden md:flex items-center gap-6 text-sm text-gray-300"> 
+        <a href="/about/" class="hover:text-xr6green transition">Tentang HQ</a> 
+        <a href="/research-engineering/" class="hover:text-xr6green transition">Research & 
+Engineering</a> 
+        <a href="/research-hub/" class="hover:text-xr6green transition">Research Hub</a> 
+        <a href="/library/" class="hover:text-xr6green transition">Library</a> 
+      </nav> 
+      <div class="flex items-center gap-3"> 
+        <a href="/login/" class="bg-xr6green text-xr6bg font-semibold text-sm px-4 py-2 rounded hover:opacity-90 transition min-h-[44px] flex items-center">Log masuk</a> 
+      </div> 
+    </div> 
+  </header> 
+ 
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-10 w-full"> 
+    <div class="bismillah-header" dir="rtl" lang="ar">بِسْمِ ٱ َّ  ِ ٱل َّ رحْمَـٰنِ ٱل َّ رحِیمِ</div> 
+ 
+    <section class="rounded-2xl border border-xr6border bg-xr6card p-8 md:p-12 relative overflow-hidden"> 
+      <div class="max-w-2xl space-y-5 relative z-10"> 
+        <p class="text-xs font-bold tracking-widest uppercase text-xr6green">RESEARCH & 
+ENGINEERING INSTITUTE</p> 
+        <h1 class="text-3xl md:text-5xl font-bold leading-tight text-white">Entering a New Era 
+Digital with Islamic Technology</h1> 
+        <p class="text-gray-300 text-base md:text-lg leading-relaxed"> 
+          Institut penyelidikan dan kejuruteraan bersepadu yang memacu inovasi dalam AI terdesentralisasi, keselamatan kriptografi, pengkomputeran lestari dan XR6 Academic Programme (XR6 BSA – SASSI). 
+        </p> 
+        <div class="flex flex-wrap gap-4 pt-2"> 
+          <a href="/library/" class="bg-xr6orange text-xr6bg font-bold px-6 py-3 rounded-lg hover:opacity-90 transition min-h-[44px] flex items-center">Terokai penyelidikan</a> 
+          <a href="/register/" class="border border-xr6border bg-xr6bg text-white font-medium px-6 py-3 rounded-lg hover:border-xr6green transition min-h-[44px] flex items-center">Daftar ahli</a> 
+        </div> 
+      </div> 
+      <div class="hidden lg:flex absolute right-10 top-1/2 -translate-y-1/2 items-center justify-center pointer-events-none"> 
+        <img src="/assets/xr6-hq-logo.svg" alt="XR6 Labs HQ Crest" class="w-56 h-56 object-contain opacity-90" /> 
+      </div> 
+    </section> 
+ 
+    <section class="grid md:grid-cols-2 gap-6"> 
+      <a href="/research-engineering/" class="group rounded-xl border border-xr6border bg-xr6card p-6 hover:border-xr6green transition"> 
+        <h2 class="text-xl font-bold text-xr6green mb-2 group-hover:underline">Research & 
+Engineering</h2> 
+        <p class="text-gray-300 text-sm">Kecerdasan buatan terdesentralisasi, keselamatan kriptografi, pengkomputeran lestari (Eco-Compute) dan teknologi bioperubatan.</p> 
+      </a> 
+      <a href="/research-hub/" class="group rounded-xl border border-xr6border bg-xr6card p-6 hover:border-xr6green transition"> 
+        <h2 class="text-xl font-bold text-xr6green mb-2 group-hover:underline">Research Hub & 
+XR6 Academic</h2> 
+        <p class="text-gray-300 text-sm">Penyelidikan akademik terbuka, integrasi komuniti Zenodo dan sokongan IPT melalui program XR6 BSA – SASSI.</p> 
+      </a> 
+    </section> 
+  </main> 
+ 
+  <footer class="border-t border-xr6border bg-xr6bg py-8 mt-12"> 
+    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-gray-400"> 
+      <div class="space-y-2"> 
+        <div class="flex flex-wrap gap-5"> 
+          <a href="/about/" class="hover:text-white">Tentang & SOP</a> 
+          <a href="/contact/" class="hover:text-white">Hubungi (hq@ac.xr6labs.com)</a> 
+          <a href="/policies/#privacy" class="hover:text-white">Privasi (PDPA)</a> 
+          <a href="/policies/#curation" class="hover:text-white">Polisi Kurasi</a>         </div> 
+        <p>© 2026 XR6 Labs HQ – Research & Engineering. ISO/IEC 27001:2022, SOC 2 Type II & HIPAA-Aligned Cloud Governance.</p> 
+      </div> 
+      <a href="https://sfdora.org" target="_blank" rel="noopener" title="Signatory of DORA" class="flex items-center gap-3 border border-xr6border rounded-lg px-3 py-2 hover:border-xr6green transition"> 
+        <img src="/assets/dora-signatory.svg" alt="Signatory of DORA" class="w-10 h-10 object-contain" /> 
+        <span class="text-gray-300 font-medium">Signatory of DORA</span> 
+      </a> 
+    </div> 
+  </footer> 
+  <script src="/assets/site.js"></script> 
+</body> 
+</html> 
