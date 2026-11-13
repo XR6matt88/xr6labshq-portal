@@ -1,21 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap');
 
+:root {
+  --bg-dark: #081210;
+  --surface-card: #0E1F1B;
+  --border-subtle: #1A3831;
+  --healing-green: #39E58C;
+  --power-orange: #FF6A00;
+  --royal-gold: #D7B46A;
+  --electric-blue: #9BBFFF;
+  --chem-cyan: #37DDF4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background-color: #081210;
+  margin: 0;
+  background-color: var(--bg-dark);
   color: #F1F5F4;
   font-family: 'Roboto', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Pembukaan Rasmi: Kalimah Bismillah Jawi Tashkeel */
+.bismillah-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.75rem 1rem 0.5rem;
+  text-align: center;
 }
 
 .bismillah-header {
   font-family: 'Amiri', 'Scheherazade New', serif;
-  font-size: 2rem;
+  font-size: clamp(1.9rem, 5.5vw, 2.85rem);
   font-weight: 700;
-  color: #D7B46A;
+  color: var(--royal-gold);
   text-align: center;
-  padding: 0.75rem 1rem 0.25rem;
-  text-shadow: 0 2px 14px rgba(215, 180, 106, 0.3);
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 16px rgba(215, 180, 106, 0.35);
+  margin: 0 auto;
 }
 
+/* Corak Latar Belakang Halus */
 .hex-pattern {
-  background-image: radial-gradient(circle at 50% 50%, rgba(215, 180, 106, 0.12) 0%, transparent 70%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(215, 180, 106, 0.1) 0%, transparent 65%);
+}
+
+/* Gaya Kad & Butang */
+.xr6-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.875rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.xr6-card:hover {
+  border-color: rgba(57, 229, 140, 0.45);
 }
