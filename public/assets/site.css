@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+body {
+  background-color: #081210;
+  color: #F1F5F4;
+  font-family: 'Roboto', sans-serif;
+}
+
+.bismillah-header {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #D7B46A;
+  text-align: center;
+  padding: 0.75rem 1rem 0.25rem;
+  text-shadow: 0 2px 14px rgba(215, 180, 106, 0.3);
+}
+
+.hex-pattern {
+  background-image: radial-gradient(circle at 50% 50%, rgba(215, 180, 106, 0.12) 0%, transparent 70%);
+}
