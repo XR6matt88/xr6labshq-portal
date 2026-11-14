@@ -1,4 +1,4 @@
-name = "xr6labshq-portal"
+et name = "xr6labshq-portal"
 main = "worker.js"
 compatibility_date = "2026-11-10"
 
@@ -11,8 +11,8 @@ run_worker_first = ["/api/*"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "GANTI_NAMA_DATABASE_D1_ANDA"
-database_id = "GANTI_DATABASE_ID_D1_ANDA"
+database_name = "xr6-labs-production"
+database_id = "3ebdf1e8-6a70-4e68-80fa-75ed23bcda20"
 
 [vars]
 APP_ENV = "production"
