@@ -38,68 +38,91 @@ function normaliseHit(hit, communitySlug, communityTitle) {
   };
 }
 
+function extractHits(payload) {
+  if (Array.isArray(payload?.hits?.hits)) return payload.hits.hits;
+  if (Array.isArray(payload?.hits)) return payload.hits;
+  if (Array.isArray(payload?.records)) return payload.records;
+  return [];
+}
+
 export async function syncZenodoCommunity(env, communitySlug, communityTitle) {
   if (!communitySlug || !env.DB) {
     return { ok: false, error: 'Missing communitySlug or DB binding' };
   }
 
-  const apiUrl = `https://zenodo.org/api/communities/${encodeURIComponent(communitySlug)}/records?size=100&sort=mostrecent`;
+  const firstUrl = `https://zenodo.org/api/communities/${encodeURIComponent(communitySlug)}/records?size=100&sort=mostrecent`;
+  const maxPages = Math.min(Math.max(Number(env.ZENODO_SYNC_MAX_PAGES) || 10, 1), 50);
 
   try {
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'XR6-Labs-HQ-Portal/1.0 (mailto:hq@ac.xr6labs.com)',
-        'Accept': 'application/json'
+    let nextUrl = firstUrl;
+    let pagesFetched = 0;
+    let recordsFetched = 0;
+    let hasMore = false;
+
+    while (nextUrl && pagesFetched < maxPages) {
+      const pageUrl = new URL(nextUrl);
+      if (pageUrl.protocol !== 'https:' || pageUrl.hostname !== 'zenodo.org') {
+        throw new Error('Zenodo pagination returned an invalid URL');
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Zenodo API HTTP ${response.status}`);
-    }
+      const response = await fetch(pageUrl.toString(), {
+        headers: {
+          'User-Agent': 'XR6-Labs-HQ-Portal/1.0 (mailto:hq@ac.xr6labs.com)',
+          'Accept': 'application/json'
+        }
+      });
 
-    const payload = await response.json();
-    const hits = payload.hits?.hits || [];
+      if (!response.ok) {
+        throw new Error(`Zenodo API HTTP ${response.status}`);
+      }
 
-    for (const rawHit of hits) {
-      const rec = normaliseHit(rawHit, communitySlug, communityTitle);
+      const payload = await response.json();
+      const hits = extractHits(payload);
+      pagesFetched += 1;
+      recordsFetched += hits.length;
 
-      await env.DB.prepare(`
-        INSERT INTO zenodo_records (
-          zenodo_id, concept_doi, version_doi, community_slug, community_title,
-          title, abstract, resource_type, publication_date, license_id,
-          access_right, zenodo_url, authors_json, synced_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(zenodo_id) DO UPDATE SET
-          concept_doi = excluded.concept_doi,
-          version_doi = excluded.version_doi,
-          community_title = excluded.community_title,
-          title = excluded.title,
-          abstract = excluded.abstract,
-          resource_type = excluded.resource_type,
-          publication_date = excluded.publication_date,
-          license_id = excluded.license_id,
-          access_right = excluded.access_right,
-          zenodo_url = excluded.zenodo_url,
-          authors_json = excluded.authors_json,
-          synced_at = CURRENT_TIMESTAMP
-      `).bind(
-        rec.zenodo_id,
-        rec.concept_doi,
-        rec.version_doi,
-        rec.community_slug,
-        rec.community_title,
-        rec.title,
-        rec.abstract,
-        rec.resource_type,
-        rec.publication_date,
-        rec.license_id,
-        rec.access_right,
-        rec.zenodo_url,
-        rec.authors_json
-      ).run();
+      for (const rawHit of hits) {
+        if (!rawHit?.id) continue;
+        const rec = normaliseHit(rawHit, communitySlug, communityTitle);
 
-      for (const creator of rec.creators) {
-        if (creator.orcid) {
+        await env.DB.prepare(`
+          INSERT INTO zenodo_records (
+            zenodo_id, concept_doi, version_doi, community_slug, community_title,
+            title, abstract, resource_type, publication_date, license_id,
+            access_right, zenodo_url, authors_json, synced_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT(zenodo_id) DO UPDATE SET
+            concept_doi = excluded.concept_doi,
+            version_doi = excluded.version_doi,
+            community_title = excluded.community_title,
+            title = excluded.title,
+            abstract = excluded.abstract,
+            resource_type = excluded.resource_type,
+            publication_date = excluded.publication_date,
+            license_id = excluded.license_id,
+            access_right = excluded.access_right,
+            zenodo_url = excluded.zenodo_url,
+            authors_json = excluded.authors_json,
+            synced_at = CURRENT_TIMESTAMP
+        `).bind(
+          rec.zenodo_id,
+          rec.concept_doi,
+          rec.version_doi,
+          rec.community_slug,
+          rec.community_title,
+          rec.title,
+          rec.abstract,
+          rec.resource_type,
+          rec.publication_date,
+          rec.license_id,
+          rec.access_right,
+          rec.zenodo_url,
+          rec.authors_json
+        ).run();
+
+        for (const creator of rec.creators) {
+          if (!creator.orcid) continue;
+
           const member = await env.DB.prepare(
             `SELECT id FROM members WHERE orcid_id = ? AND orcid_verified = 1 AND status = 'active'`
           ).bind(creator.orcid).first();
@@ -112,14 +135,18 @@ export async function syncZenodoCommunity(env, communitySlug, communityTitle) {
           }
         }
       }
+
+      const next = payload?.links?.next;
+      nextUrl = next ? new URL(next, pageUrl).toString() : null;
+      hasMore = Boolean(nextUrl);
     }
 
     await env.DB.prepare(`
       INSERT INTO sync_logs (id, community_slug, records_fetched, status)
       VALUES (?, ?, ?, 'success')
-    `).bind(crypto.randomUUID(), communitySlug, hits.length).run();
+    `).bind(crypto.randomUUID(), communitySlug, recordsFetched).run();
 
-    return { ok: true, communitySlug, count: hits.length };
+    return { ok: true, communitySlug, count: recordsFetched, pagesFetched, hasMore };
   } catch (err) {
     await env.DB.prepare(`
       INSERT INTO sync_logs (id, community_slug, records_fetched, status, error_message)
