@@ -6,14 +6,23 @@ import {
   clearSessionCookie,
   getCurrentMember,
   verifyTurnstile,
+  consumeRateLimit,
   logAudit
 } from './lib.js';
 import { sendMagicLinkEmail } from './mail.js';
 import { syncAllCommunities } from './sync.js';
 
+const ALLOWED_MEMBER_STATUSES = new Set(['pending', 'active', 'suspended']);
+const ALLOWED_ASSIGNABLE_ROLES = new Set(['member', 'secondary_admin']);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(syncAllCommunities(env));
+    const cleanup = env.DB
+      ? env.DB.prepare(`DELETE FROM request_rate_limits WHERE window_start < ?`)
+          .bind(Math.floor(Date.now() / 1000) - 24 * 60 * 60).run()
+      : Promise.resolve();
+    ctx.waitUntil(Promise.all([syncAllCommunities(env), cleanup]));
   },
 
   async fetch(request, env, ctx) {
@@ -22,7 +31,6 @@ export default {
     const method = request.method;
 
     try {
-      // 1. API Awam: Katalog Rekod Zenodo (Research Library)
       if (path === '/api/records' && method === 'GET') {
         const q = (url.searchParams.get('q') || '').trim();
         const community = (url.searchParams.get('community') || '').trim();
@@ -41,29 +49,41 @@ export default {
           params.push(like, like, like);
         }
 
-        if (conditions.length > 0) {
-          query += ` WHERE ` + conditions.join(' AND ');
-        }
+        if (conditions.length > 0) query += ` WHERE ` + conditions.join(' AND ');
         query += ` ORDER BY publication_date DESC, synced_at DESC LIMIT 100`;
 
         const { results } = await env.DB.prepare(query).bind(...params).all();
         return json({ ok: true, records: results || [] });
       }
 
-      // 2. API Auth: Minta Pautan Log Masuk (Magic Link)
       if (path === '/api/auth/request-link' && method === 'POST') {
-        const body = await request.json();
-        const email = (body.email || '').trim().toLowerCase();
-        const turnstileToken = body.turnstileToken || '';
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Permintaan tidak sah.' }, 400);
+        }
+        const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+        const turnstileToken = typeof body?.turnstileToken === 'string' ? body.turnstileToken : '';
 
-        if (!email || !email.includes('@')) {
+        if (email.length > 254 || !EMAIL_PATTERN.test(email)) {
           return json({ ok: false, error: 'Alamat e-mel tidak sah.' }, 400);
         }
 
-        const ip = request.headers.get('CF-Connecting-IP');
-        const humanOk = await verifyTurnstile(turnstileToken, ip, env);
+        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        const humanOk = await verifyTurnstile(turnstileToken, ip, env, url.hostname);
         if (!humanOk) {
           return json({ ok: false, error: 'Pengesahan keselamatan Turnstile gagal.' }, 403);
+        }
+
+        const ipAllowed = await consumeRateLimit(env.DB, 'request-link-ip', ip, 10);
+        const emailAllowed = await consumeRateLimit(env.DB, 'request-link-email', email, 3);
+        if (!ipAllowed || !emailAllowed) {
+          return json(
+            { ok: false, error: 'Terlalu banyak permintaan. Sila cuba lagi dalam masa sejam.' },
+            429,
+            { 'Retry-After': '3600' }
+          );
         }
 
         const rawToken = generateToken(32);
@@ -81,7 +101,6 @@ export default {
         return json({ ok: true, message: 'Pautan pengesahan telah dihantar ke e-mel anda.' });
       }
 
-      // 3. API Auth: Sahkan Pautan Log Masuk (Magic Link Callback)
       if (path === '/api/auth/verify' && method === 'GET') {
         const rawToken = url.searchParams.get('token') || '';
         if (!rawToken) return Response.redirect(`${url.origin}/login?error=missing_token`, 302);
@@ -115,6 +134,10 @@ export default {
             .bind(member.id).run();
         }
 
+        if (member.status === 'suspended') {
+          return Response.redirect(`${url.origin}/login?error=account_suspended`, 302);
+        }
+
         const sessionRaw = generateToken(32);
         const sessionHash = await sha256Hex(sessionRaw);
         const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -143,12 +166,10 @@ export default {
         });
       }
 
-      // 4. API Auth: Log Keluar
       if (path === '/api/auth/logout' && method === 'POST') {
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
-      // 5. API Profil Ahli Semasa (/api/me)
       if (path === '/api/me' && method === 'GET') {
         const member = await getCurrentMember(request, env);
         if (!member) return json({ ok: false, error: 'Tidak log masuk.' }, 401);
@@ -164,7 +185,6 @@ export default {
         return json({ ok: true, member, publications: pubs || [] });
       }
 
-      // 6. API Admin: Segerakkan Zenodo Sekarang
       if (path === '/api/admin/sync-zenodo' && method === 'POST') {
         const member = await getCurrentMember(request, env);
         if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
@@ -176,7 +196,6 @@ export default {
         return json({ ok: true, result });
       }
 
-      // 7. API Admin: Senarai & Kelulusan Ahli (Serta Pelantikan Admin Kedua)
       if (path === '/api/admin/members' && method === 'GET') {
         const member = await getCurrentMember(request, env);
         if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
@@ -196,35 +215,97 @@ export default {
           return json({ ok: false, error: 'Akses pentadbir diperlukan.' }, 403);
         }
 
-        const body = await request.json();
-        const { memberId, status, role, displayName, email } = body;
-        if (!memberId) return json({ ok: false, error: 'memberId diperlukan.' }, 400);
-
-        if (status) {
-          await env.DB.prepare(`UPDATE members SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-            .bind(status, memberId).run();
-        }
-        if (role && actor.role === 'admin') {
-          await env.DB.prepare(`UPDATE members SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-            .bind(role, memberId).run();
-        }
-        if (displayName && email && actor.role === 'admin') {
-          await env.DB.prepare(`UPDATE members SET display_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-            .bind(displayName.trim(), email.trim().toLowerCase(), memberId).run();
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Permintaan tidak sah.' }, 400);
         }
 
-        await logAudit(env, actor.id, 'UPDATE_MEMBER', 'member', memberId, { status, role });
+        const memberId = typeof body?.memberId === 'string' ? body.memberId.trim() : '';
+        if (!memberId || memberId.length > 128) {
+          return json({ ok: false, error: 'memberId tidak sah.' }, 400);
+        }
+
+        const target = await env.DB.prepare(`SELECT id, role FROM members WHERE id = ?`)
+          .bind(memberId).first();
+        if (!target) return json({ ok: false, error: 'Ahli tidak ditemui.' }, 404);
+        if (target.role === 'admin') {
+          return json({ ok: false, error: 'Akaun pentadbir utama dilindungi daripada perubahan melalui endpoint ini.' }, 403);
+        }
+        if (memberId === actor.id && (body.status !== undefined || body.role !== undefined)) {
+          return json({ ok: false, error: 'Anda tidak boleh mengubah status atau peranan akaun sendiri.' }, 400);
+        }
+
+        const updates = [];
+        const values = [];
+
+        if (body.status !== undefined) {
+          if (!ALLOWED_MEMBER_STATUSES.has(body.status)) {
+            return json({ ok: false, error: 'Status ahli tidak sah.' }, 400);
+          }
+          if (actor.role === 'secondary_admin' && target.role !== 'member') {
+            return json({ ok: false, error: 'Secondary admin hanya boleh mengemas kini status ahli biasa.' }, 403);
+          }
+          updates.push('status = ?');
+          values.push(body.status);
+        }
+
+        if (body.role !== undefined) {
+          if (actor.role !== 'admin') {
+            return json({ ok: false, error: 'Hanya admin utama boleh mengubah peranan.' }, 403);
+          }
+          if (!ALLOWED_ASSIGNABLE_ROLES.has(body.role)) {
+            return json({ ok: false, error: 'Peranan ahli tidak sah.' }, 400);
+          }
+          updates.push('role = ?');
+          values.push(body.role);
+        }
+
+        let profileUpdated = false;
+        if (body.displayName !== undefined || body.email !== undefined) {
+          if (actor.role !== 'admin') {
+            return json({ ok: false, error: 'Hanya admin utama boleh mengubah profil ahli.' }, 403);
+          }
+          if (body.displayName !== undefined) {
+            if (typeof body.displayName !== 'string' || !body.displayName.trim() || body.displayName.trim().length > 120) {
+              return json({ ok: false, error: 'Nama paparan tidak sah.' }, 400);
+            }
+            updates.push('display_name = ?');
+            values.push(body.displayName.trim());
+          }
+          if (body.email !== undefined) {
+            if (typeof body.email !== 'string' || body.email.trim().length > 254 || !EMAIL_PATTERN.test(body.email.trim())) {
+              return json({ ok: false, error: 'Alamat e-mel tidak sah.' }, 400);
+            }
+            updates.push('email = ?');
+            values.push(body.email.trim().toLowerCase());
+          }
+          profileUpdated = true;
+        }
+
+        if (updates.length === 0) {
+          return json({ ok: false, error: 'Tiada perubahan sah diberikan.' }, 400);
+        }
+
+        updates.push('updated_at = CURRENT_TIMESTAMP');
+        values.push(memberId);
+        await env.DB.prepare(`UPDATE members SET ${updates.join(', ')} WHERE id = ?`)
+          .bind(...values).run();
+
+        await logAudit(env, actor.id, 'UPDATE_MEMBER', 'member', memberId, {
+          status: body.status,
+          role: body.role,
+          profileUpdated
+        });
         return json({ ok: true });
       }
 
-      // 8. Hidangkan Fail Statik (Folder public/)
-      if (env.ASSETS) {
-        return await env.ASSETS.fetch(request);
-      }
-
+      if (env.ASSETS) return await env.ASSETS.fetch(request);
       return new Response('XR6 Labs HQ Worker Active', { status: 200 });
     } catch (err) {
-      return json({ ok: false, error: err.message }, 500);
+      console.error('Worker request failed', err);
+      return json({ ok: false, error: 'Ralat pelayan. Sila cuba lagi kemudian.' }, 500);
     }
   }
 };
