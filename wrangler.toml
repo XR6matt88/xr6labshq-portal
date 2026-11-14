@@ -1,5 +1,5 @@
 name = "xr6labshq-portal"
-main = "src/index.js"
+main = "worker.js"
 compatibility_date = "2026-11-10"
 
 [assets]
@@ -20,4 +20,3 @@ ZEPTO_API_URL = "https://api.zeptomail.com/v1.1/email"
 
 [triggers]
 crons = ["*/30 * * * *"]
-
