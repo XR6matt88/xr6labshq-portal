@@ -2,24 +2,36 @@ name = "xr6labshq-portal"
 main = "worker.js"
 compatibility_date = "2026-11-10"
 
+# Static assets (HTML/CSS/JS frontend)
 [assets]
 directory = "./public"
-binding = "ASSETS"
-html_handling = "auto-trailing-slash"
-not_found_handling = "404-page"
-run_worker_first = ["/api/*"]
 
+# D1 Database binding
 [[d1_databases]]
 binding = "DB"
 database_name = "xr6-labs-production"
 database_id = "3ebdf1e8-6a70-4e68-80fa-75ed23bcda20"
 
+# Plain text environment variables
 [vars]
 APP_ENV = "production"
+FROM_EMAIL = "hq@ac.xr6labs.com"
 ZENODO_COMMUNITY_SLUG = "xr6labshqhub"
 ZENODO_SASSI_SLUG = "xr6-bsa-sassi"
-FROM_EMAIL = "hq@ac.xr6labs.com"
 ZEPTO_API_URL = "https://api.zeptomail.com/v1.1/email"
 
+# Cron trigger — auto-sync Zenodo every 30 minutes
 [triggers]
 crons = ["*/30 * * * *"]
+
+# ──────────────────────────────────────────────
+# SECRETS — JANGAN letak di sini!
+# Secret ini sudah dikonfigurasi dalam Worker dan kekal selepas deploy.
+# Jika perlu set semula, guna: npx wrangler secret put <NAME>
+#
+#   ORCID_CLIENT_ID
+#   ORCID_CLIENT_SECRET
+#   SESSION_SECRET
+#   TURNSTILE_SECRET_KEY
+#   ZEPTO_API_KEY
+# ──────────────────────────────────────────────
