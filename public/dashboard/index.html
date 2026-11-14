@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Penyelidik – XR6 Labs HQ</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
+
+  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>PORTAL AHLI</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="/library" class="text-xs text-[#39E58C] hover:underline">Research Library</a>
+        <button id="logoutBtn" class="px-3 py-1.5 rounded-lg bg-red-950/70 border border-red-500/40 text-red-200 text-xs font-semibold">
+          Log Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
+    <section class="xr6-card p-6 sm:p-8 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-[#D7B46A]">Profil Penyelidik</span>
+        <span id="statusBadge" class="px-2.5 py-0.5 rounded-full text-xs bg-[#132924] text-[#39E58C]">Memuatkan...</span>
+      </div>
+      <h1 id="memberName" class="text-2xl font-bold text-white">Memuatkan profil...</h1>
+      <p id="memberMeta" class="text-xs text-gray-400"></p>
+    </section>
+
+    <section class="xr6-card p-6 sm:p-8 space-y-4">
+      <h2 class="text-lg font-bold text-[#39E58C]">Penerbitan Zenodo Terpaut</h2>
+      <div id="pubList" class="space-y-3 text-xs text-gray-300">
+        <p class="text-gray-400">Memuatkan senarai penerbitan...</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function initDashboard() {
+      const res = await fetch('/api/me');
+      if (!res.ok) {
+        window.location.href = '/login';
+        return;
+      }
+      const data = await res.json();
+      if (!data.ok) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const m = data.member;
+      document.getElementById('memberName').textContent = m.display_name;
+      document.getElementById('memberMeta').textContent = `${m.email} • Institusi: ${m.institution || 'Belum ditetapkan'} • ORCID: ${m.orcid_id || 'Belum dipautkan'}`;
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = m.status === 'active' ? 'Akaun Aktif' : 'Menunggu Kelulusan Pentadbir (Pending)';
+      if (m.status !== 'active') badge.className = 'px-2.5 py-0.5 rounded-full text-xs bg-amber-950 text-amber-300';
+
+      const pubList = document.getElementById('pubList');
+      if (!data.publications.length) {
+        pubList.innerHTML = '<p class="text-gray-400">Tiada penerbitan Zenodo dipautkan secara automatik lagi. Pastikan ORCID iD anda sepadan dengan rekod di Zenodo.</p>';
+      } else {
+        pubList.innerHTML = data.publications.map(p => `
+          <div class="p-4 rounded-lg bg-[#081210] border border-[#1A3831] flex items-center justify-between gap-4">
+            <div>
+              <p class="font-bold text-white text-sm">${p.title}</p>
+              <p class="text-gray-400 mt-1">${p.community_title} • ${p.publication_date || ''}</p>
+            </div>
+            <a href="${p.zenodo_url}" target="_blank" class="shrink-0 px-3 py-1.5 rounded bg-[#FF6A00] text-[#081210] font-bold">Zenodo ↗</a>
+          </div>
+        `).join('');
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+
+    initDashboard();
+  </script>
+</body>
+</html>
