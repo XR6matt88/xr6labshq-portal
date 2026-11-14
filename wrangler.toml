@@ -1,5 +1,5 @@
 name = "xr6labshq-portal"
-main = "worker.js"
+main = "src/index.js"
 compatibility_date = "2026-11-10"
 
 [assets]
@@ -9,10 +9,10 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "xr6-labs-staging"
-database_id = "048594e4-ed5a-4191-bc1b-463e77abf962"
+database_id = "048594e4-ed5a-4101-bc1b-463e77abf963"
 
 [vars]
-APP_ENV = "staging"
+APP_ENV = "production"
 ZENODO_COMMUNITY_SLUG = "xr6labshqhub"
 ZENODO_SASSI_SLUG = "xr6-bsa-sassi"
 FROM_EMAIL = "hq@ac.xr6labs.com"
@@ -20,3 +20,4 @@ ZEPTO_API_URL = "https://api.zeptomail.com/v1.1/email"
 
 [triggers]
 crons = ["*/30 * * * *"]
+
