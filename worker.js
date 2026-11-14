@@ -199,7 +199,7 @@ async function syncZenodoCommunity(env, communitySlug, communityTitle) {
     return { ok: false, error: 'Missing communitySlug or DB binding' };
   }
 
-  const apiUrl = `https://zenodo.org/api/records?communities=${encodeURIComponent(communitySlug)}&size=100&sort=mostrecent`;
+  const apiUrl = `https://zenodo.org/api/communities/${encodeURIComponent(communitySlug)}/records?size=100&sort=mostrecent`;
 
   try {
     const response = await fetch(apiUrl, {
