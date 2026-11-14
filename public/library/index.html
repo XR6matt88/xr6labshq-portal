@@ -3,292 +3,195 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Research Library – XR6 Labs HQ</title>
-  <meta name="description" content="Katalog rasmi penerbitan penyelidikan, laporan teknikal, set data dan modul akademik XR6 Labs HQ & XR6 BSA – SASSI." />
+  <title>Research Library – XR6 Labs HQ™</title>
   <link rel="stylesheet" href="/assets/site.css" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
 
-  <!-- Bar Navigasi Utama -->
   <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
     <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
       <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base sm:text-lg shrink-0">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold shadow-sm">
-          XR6
-        </span>
-        <span>XR6 LABS HQ</span>
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px]">™</sup></span>
       </a>
 
-      <nav class="hidden md:flex items-center gap-6 text-sm text-gray-300">
-        <a href="/about" class="hover:text-[#39E58C] transition">Tentang HQ</a>
-        <a href="/research-engineering" class="hover:text-[#39E58C] transition">Research &amp; Engineering</a>
-        <a href="/research-hub" class="hover:text-[#39E58C] transition">Research Hub</a>
-        <a href="/library" class="text-[#39E58C] font-semibold">Library</a>
-        <a href="/xr6-academic/sassi" class="hover:text-[#39E58C] transition">XR6 Academic</a>
-      </nav>
-
-      <div class="flex items-center gap-2.5 shrink-0">
-        <a href="/login" class="px-3.5 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-semibold text-xs sm:text-sm hover:opacity-90 transition">
-          Log masuk
-        </a>
+      <div class="flex items-center gap-2.5">
+        <a href="/" class="text-xs text-gray-300 hover:text-[#39E58C]">Utama</a>
+        <a href="/login" class="px-3.5 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-semibold text-xs">Log masuk</a>
       </div>
-    </div>
-
-    <!-- Navigasi Pantas Telefon Pintar -->
-    <div class="md:hidden border-t border-[#1A3831]/60 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs text-gray-300 whitespace-nowrap">
-      <a href="/" class="hover:text-[#39E58C]">Utama</a>
-      <a href="/about" class="hover:text-[#39E58C]">Tentang HQ</a>
-      <a href="/library" class="text-[#39E58C] font-semibold">Library</a>
-      <a href="/research-hub" class="hover:text-[#39E58C]">Research Hub</a>
-      <a href="/xr6-academic/sassi" class="hover:text-[#39E58C]">XR6 Academic</a>
     </div>
   </header>
 
-  <!-- Kandungan Utama -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
-
-    <!-- Bahagian Header & Carian -->
     <section class="xr6-card p-6 sm:p-8 space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="space-y-1.5">
-          <p class="text-xs font-bold uppercase tracking-widest text-[#39E58C]">
-            Open Science &amp; Zenodo Repository
-          </p>
-          <h1 class="text-2xl sm:text-3xl font-bold text-white">
-            XR6 Research Library
-          </h1>
-          <p class="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-            Koleksi rasmi kertas kerja, laporan teknikal, set data dan modul akademik yang disegerakkan daripada komuniti Zenodo <span class="text-[#D7B46A] font-medium">XR6 Labs HQ</span> dan <span class="text-[#D7B46A] font-medium">XR6 BSA – SASSI</span>.
+          <p class="text-xs font-bold uppercase tracking-widest text-[#39E58C]">Open Science, ORCID &amp; Zenodo Repository</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white">XR6 Research Library</h1>
+          <p class="text-xs sm:text-sm text-gray-300 max-w-2xl">
+            Katalog penerbitan rasmi daripada komuniti Zenodo <span class="text-[#D7B46A]">XR6 Labs HQ</span> dan <span class="text-[#D7B46A]">XR6 BSA – SASSI</span> dengan padanan automatik ORCID.
           </p>
         </div>
 
-        <div id="statsBadge" class="shrink-0 px-3.5 py-2 rounded-lg bg-[#081210] border border-[#1A3831] text-xs text-gray-300">
-          Memuatkan rekod...
+        <!-- Butang Sync ORCID & Status Rekod -->
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            id="syncOrcidBtn"
+            class="px-3.5 py-2 rounded-lg bg-[#132924] border border-[#39E58C]/60 text-[#39E58C] font-bold text-xs hover:bg-[#1A3831] transition flex items-center gap-2 cursor-pointer"
+          >
+            <span class="w-4 h-4 rounded-full bg-[#A6CE39] text-[#081210] font-extrabold text-[9px] inline-flex items-center justify-center">iD</span>
+            <span>Sync ORCID &amp; Zenodo</span>
+          </button>
+
+          <div id="statsBadge" class="px-3.5 py-2 rounded-lg bg-[#081210] border border-[#1A3831] text-xs text-gray-300">
+            Memuatkan...
+          </div>
         </div>
       </div>
 
-      <!-- Bar Carian & Penapis Komuniti -->
+      <!-- Bar Carian & Penapis -->
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
-        <div class="sm:col-span-7 relative">
+        <div class="sm:col-span-7">
           <input
             type="text"
             id="searchInput"
-            placeholder="Cari tajuk penerbitan, kata kunci abstrak atau nama pengarang..."
-            class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm placeholder-gray-500 focus:outline-none focus:border-[#39E58C]"
+            placeholder="Cari tajuk, abstrak, pengarang atau ORCID..."
+            class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]"
           />
         </div>
-
         <div class="sm:col-span-3">
-          <select
-            id="communitySelect"
-            class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]"
-          >
+          <select id="communitySelect" class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]">
             <option value="">Semua Komuniti Zenodo</option>
             <option value="xr6labshqhub">XR6 Labs HQ – Research Hub</option>
             <option value="xr6-bsa-sassi">XR6 BSA – SASSI Academic</option>
           </select>
         </div>
-
         <div class="sm:col-span-2">
-          <button
-            type="button"
-            id="resetBtn"
-            class="w-full py-2.5 px-3 rounded-lg bg-[#132924] border border-[#1A3831] text-gray-300 text-xs sm:text-sm font-medium hover:border-[#39E58C] hover:text-white transition"
-          >
+          <button type="button" id="resetBtn" class="w-full py-2.5 px-3 rounded-lg bg-[#132924] border border-[#1A3831] text-gray-300 text-xs sm:text-sm hover:border-[#39E58C] transition">
             Set Semula
           </button>
         </div>
       </div>
     </section>
 
-    <!-- Notifikasi Salin Sitasi -->
-    <div id="toastNotice" class="hidden fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg bg-[#0E1F1B] border border-[#39E58C] text-[#39E58C] text-xs font-semibold shadow-lg">
-      Sitasi berjaya disalin ke papan keratan!
-    </div>
+    <div id="toastNotice" class="hidden fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg bg-[#0E1F1B] border border-[#39E58C] text-[#39E58C] text-xs font-semibold shadow-lg"></div>
 
-    <!-- Senarai Rekod Penerbitan -->
     <div id="recordsContainer" class="grid grid-cols-1 gap-4">
-      <div class="xr6-card p-8 text-center text-xs text-gray-400">
-        Memuatkan katalog penyelidikan daripada pangkalan data...
-      </div>
+      <div class="xr6-card p-8 text-center text-xs text-gray-400">Memuatkan katalog penyelidikan...</div>
     </div>
-
   </main>
 
-  <!-- Footer Rasmi -->
   <footer class="border-t border-[#1A3831] bg-[#060E0C] py-8 px-4 text-xs text-gray-400 mt-10">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
-        <p class="font-bold text-white text-sm">XR6 Labs HQ – Research &amp; Engineering</p>
-        <p class="mt-0.5">26A, Kg. Banggol Petai, Mukim Air Putih, 06700 Pendang, Kedah Darul Aman, Malaysia</p>
+        <p class="font-bold text-white text-sm">&copy; 2026 XR6 Labs HQ&trade; – Research &amp; Engineering</p>
+        <p class="mt-0.5">Hak Cipta Terpelihara &bull; <a href="/policies" class="text-[#39E58C] hover:underline">Notis Privasi (PDPA) &amp; Polisi</a></p>
       </div>
-      <div class="flex flex-wrap gap-4 text-[#39E58C]">
-        <a href="/" class="hover:underline">Utama</a>
-        <a href="/about" class="hover:underline">Tentang HQ</a>
-        <a href="https://zenodo.org/communities/xr6labshqhub" target="_blank" rel="noopener" class="hover:underline">Zenodo Hub ↗</a>
-        <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="hover:underline">Zenodo SASSI ↗</a>
+      <div class="flex flex-wrap gap-3 text-[#39E58C]">
+        <a href="https://zenodo.org/communities/xr6labshqhub" target="_blank" rel="noopener" class="hover:underline">Zenodo Hub &nearr;</a>
+        <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="hover:underline">Zenodo SASSI &nearr;</a>
+        <a href="https://orcid.org" target="_blank" rel="noopener" class="hover:underline">ORCID &nearr;</a>
       </div>
     </div>
   </footer>
 
   <script>
-    const container = document.getElementById('recordsContainer');
-    const searchInput = document.getElementById('searchInput');
-    const communitySelect = document.getElementById('communitySelect');
-    const resetBtn = document.getElementById('resetBtn');
-    const statsBadge = document.getElementById('statsBadge');
-    const toastNotice = document.getElementById('toastNotice');
+    var container = document.getElementById('recordsContainer');
+    var searchInput = document.getElementById('searchInput');
+    var communitySelect = document.getElementById('communitySelect');
+    var resetBtn = document.getElementById('resetBtn');
+    var statsBadge = document.getElementById('statsBadge');
+    var toastNotice = document.getElementById('toastNotice');
+
+    function showToast(msg) {
+      toastNotice.textContent = msg;
+      toastNotice.classList.remove('hidden');
+      setTimeout(function() { toastNotice.classList.add('hidden'); }, 3200);
+    }
 
     function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function stripHtmlTags(html) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html || '';
-      return (tmp.textContent || tmp.innerText || '').trim();
+    function stripHtml(html) {
+      var d = document.createElement('div');
+      d.innerHTML = html || '';
+      return (d.textContent || '').trim();
     }
 
-    function showToast(message) {
-      toastNotice.textContent = message;
-      toastNotice.classList.remove('hidden');
-      setTimeout(() => toastNotice.classList.add('hidden'), 2600);
-    }
-
-    window.copyCitation = function(title, authors, year, doi, url) {
-      const citationText = `${authors} (${year || 'n.d.'}). ${title}. XR6 Labs HQ / Zenodo. ${doi ? 'https://doi.org/' + doi : url}`;
-      navigator.clipboard.writeText(citationText).then(() => {
-        showToast('Sitasi akademik berjaya disalin!');
-      }).catch(() => {
-        showToast('Gagal menyalin sitasi.');
-      });
-    };
+    // Butang Sync ORCID & Zenodo
+    document.getElementById('syncOrcidBtn').addEventListener('click', async function() {
+      var btn = this;
+      btn.disabled = true;
+      showToast('Menyemak sesi ORCID & menyegerakkan katalog...');
+      try {
+        var syncRes = await fetch('/api/admin/sync-zenodo', { method: 'POST' });
+        if (syncRes.ok) {
+          var sData = await syncRes.json();
+          showToast('Penyegerakan ORCID & Zenodo berjaya dikemas kini!');
+          fetchRecords();
+        } else if (syncRes.status === 401 || syncRes.status === 403) {
+          showToast('Sila log masuk untuk memautkan & menyegerakkan ORCID iD anda.');
+          setTimeout(function() { window.location.href = '/login'; }, 1200);
+        } else {
+          fetchRecords();
+        }
+      } catch (e) {
+        fetchRecords();
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     async function fetchRecords() {
-      const q = searchInput.value.trim();
-      const community = communitySelect.value;
-      const params = new URLSearchParams();
-      if (q) params.set('q', q);
-      if (community) params.set('community', community);
-
-      statsBadge.textContent = 'Mencari rekod...';
+      var params = new URLSearchParams();
+      if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
+      if (communitySelect.value) params.set('community', communitySelect.value);
 
       try {
-        const res = await fetch('/api/records?' + params.toString());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        if (!data.ok || !Array.isArray(data.records) || data.records.length === 0) {
-          statsBadge.textContent = '0 Rekod Dijumpai';
-          container.innerHTML = `
-            <div class="xr6-card p-8 text-center space-y-2.5">
-              <p class="text-sm font-semibold text-white">Tiada rekod penerbitan dijumpai buat masa ini.</p>
-              <p class="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
-                Cuba tukar kata kunci carian atau pastikan pentadbir telah menjalankan penyegerakan Zenodo (Sync Now) di papan pemuka Admin.
-              </p>
-            </div>`;
+        var res = await fetch('/api/records?' + params.toString());
+        var data = await res.json();
+        if (!data.ok || !data.records.length) {
+          statsBadge.textContent = '0 Rekod';
+          container.innerHTML = '<div class="xr6-card p-8 text-center text-xs text-gray-400">Tiada rekod penerbitan dijumpai buat masa ini.</div>';
           return;
         }
-
-        statsBadge.innerHTML = `Menunjukkan <strong class="text-[#39E58C]">${data.records.length}</strong> penerbitan`;
-
-        container.innerHTML = data.records.map(r => {
-          let authors = [];
+        statsBadge.innerHTML = '<strong class="text-[#39E58C]">' + data.records.length + '</strong> Penerbitan';
+        container.innerHTML = data.records.map(function(r) {
+          var authors = [];
           try { authors = JSON.parse(r.authors_json || '[]'); } catch (e) {}
-          const authorNames = authors.map(a => a.name).filter(Boolean).join(', ') || 'XR6 Research Team';
-          const cleanAbstract = stripHtmlTags(r.abstract);
-          const shortAbstract = cleanAbstract.length > 280 ? cleanAbstract.slice(0, 280) + '...' : cleanAbstract;
-          const pubYear = (r.publication_date || '').slice(0, 4);
-          const safeTitle = escapeHtml(r.title);
-          const safeAuthors = escapeHtml(authorNames);
-          const safeCommunity = escapeHtml(r.community_title || r.community_slug);
-          const safeType = escapeHtml(r.resource_type || 'publication');
-          const safeDate = escapeHtml(r.publication_date || 'Tarikh tidak dinyatakan');
-          const safeDoi = escapeHtml(r.version_doi || '');
-          const safeUrl = escapeHtml(r.zenodo_url || '#');
-          const safeLicense = escapeHtml(r.license_id || 'Open Access');
+          var authorText = authors.map(function(a) {
+            return a.orcid ? a.name + ' (ORCID: ' + a.orcid + ')' : a.name;
+          }).join(', ') || 'XR6 Research Team';
+          var abs = stripHtml(r.abstract);
+          if (abs.length > 260) abs = abs.slice(0, 260) + '...';
 
-          return `
-            <article class="xr6-card p-6 space-y-3.5">
-              <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded-full bg-[#132924] border border-[#1A3831] text-[#39E58C] font-semibold">
-                    ${safeCommunity}
-                  </span>
-                  <span class="px-2 py-0.5 rounded bg-[#081210] border border-[#1A3831] text-[#D7B46A] uppercase">
-                    ${safeType}
-                  </span>
-                </div>
-                <span class="text-gray-400">${safeDate} • ${safeLicense}</span>
-              </div>
-
-              <h2 class="text-base sm:text-lg font-bold text-white leading-snug">
-                <a href="${safeUrl}" target="_blank" rel="noopener" class="hover:text-[#D7B46A] transition">
-                  ${safeTitle}
-                </a>
-              </h2>
-
-              <p class="text-xs text-[#9BBFFF] font-medium">${safeAuthors}</p>
-
-              ${shortAbstract ? `<p class="text-xs text-gray-300 leading-relaxed">${escapeHtml(shortAbstract)}</p>` : ''}
-
-              <div class="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#1A3831]/70 text-xs">
-                <span class="text-gray-400 font-mono text-[11px]">
-                  ${safeDoi ? 'DOI: ' + safeDoi : 'Zenodo ID: #' + escapeHtml(r.zenodo_id)}
-                </span>
-
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onclick='copyCitation(${JSON.stringify(r.title || "")}, ${JSON.stringify(authorNames)}, ${JSON.stringify(pubYear)}, ${JSON.stringify(r.version_doi || "")}, ${JSON.stringify(r.zenodo_url || "")})'
-                    class="px-3 py-1.5 rounded-lg bg-[#132924] border border-[#1A3831] text-gray-200 font-medium hover:border-[#37DDF4] hover:text-[#37DDF4] transition"
-                  >
-                    Salin Sitasi
-                  </button>
-                  <a
-                    href="${safeUrl}"
-                    target="_blank"
-                    rel="noopener"
-                    class="px-3.5 py-1.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold hover:opacity-90 transition"
-                  >
-                    Buka di Zenodo ↗
-                  </a>
-                </div>
-              </div>
-            </article>`;
+          return '<article class="xr6-card p-6 space-y-3">' +
+            '<div class="flex flex-wrap justify-between gap-2 text-[11px]">' +
+              '<span class="px-2.5 py-0.5 rounded-full bg-[#132924] border border-[#1A3831] text-[#39E58C] font-semibold">' + escapeHtml(r.community_title) + '</span>' +
+              '<span class="text-gray-400">' + escapeHtml(r.publication_date || '') + ' &bull; ' + escapeHtml(r.resource_type) + '</span>' +
+            '</div>' +
+            '<h2 class="text-base sm:text-lg font-bold text-white"><a href="' + escapeHtml(r.zenodo_url) + '" target="_blank" rel="noopener" class="hover:text-[#D7B46A]">' + escapeHtml(r.title) + '</a></h2>' +
+            '<p class="text-xs text-[#9BBFFF]">' + escapeHtml(authorText) + '</p>' +
+            (abs ? '<p class="text-xs text-gray-300 leading-relaxed">' + escapeHtml(abs) + '</p>' : '') +
+            '<div class="pt-2 border-t border-[#1A3831]/60 flex justify-between items-center text-xs">' +
+              '<span class="font-mono text-[11px] text-gray-400">DOI: ' + escapeHtml(r.version_doi || 'Zenodo #' + r.zenodo_id) + '</span>' +
+              '<a href="' + escapeHtml(r.zenodo_url) + '" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold">Buka di Zenodo &nearr;</a>' +
+            '</div>' +
+          '</article>';
         }).join('');
       } catch (err) {
-        statsBadge.textContent = 'Ralat Sambungan';
-        container.innerHTML = `
-          <div class="xr6-card p-8 text-center space-y-2 border-red-500/40">
-            <p class="text-sm font-semibold text-red-300">Gagal memuatkan katalog penyelidikan.</p>
-            <p class="text-xs text-gray-400">Sila pastikan enjin API Worker dan sambungan D1 sedang aktif (${escapeHtml(err.message)}).</p>
-          </div>`;
+        statsBadge.textContent = 'Ralat';
       }
     }
 
-    let debounceTimer;
-    searchInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(fetchRecords, 350);
-    });
-
+    var t;
+    searchInput.addEventListener('input', function() { clearTimeout(t); t = setTimeout(fetchRecords, 350); });
     communitySelect.addEventListener('change', fetchRecords);
-
-    resetBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      communitySelect.value = '';
-      fetchRecords();
-    });
-
+    resetBtn.addEventListener('click', function() { searchInput.value = ''; communitySelect.value = ''; fetchRecords(); });
     fetchRecords();
   </script>
 </body>
 </html>
-
