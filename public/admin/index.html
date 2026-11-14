@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Papan Pemuka Pentadbir – XR6 Labs HQ</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
+
+  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>ADMIN HQ</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="/library" class="text-xs text-[#39E58C] hover:underline">Lihat Library</a>
+        <button id="logoutBtn" class="px-3 py-1.5 rounded-lg bg-red-950/70 border border-red-500/40 text-red-200 text-xs font-semibold hover:bg-red-900/60 transition">
+          Log Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
+    <!-- Profil Pentadbir -->
+    <section class="xr6-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-[#D7B46A]">Panel Kawalan Tadbir Urus</p>
+        <h1 id="adminName" class="text-xl sm:text-2xl font-bold text-white mt-1">Memuatkan sesi...</h1>
+        <p id="adminEmail" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <div class="flex flex-wrap gap-2.5">
+        <button id="syncBtn" class="px-4 py-2.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold text-xs sm:text-sm hover:opacity-95 transition">
+          🔄 Segerakkan Rekod Zenodo (Sync Now)
+        </button>
+      </div>
+    </section>
+
+    <!-- Paparan Status Operasi -->
+    <div id="alertBox" class="hidden rounded-lg p-3.5 text-xs leading-relaxed"></div>
+
+    <!-- Pengurusan Ahli & Kelulusan -->
+    <section class="xr6-card p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-[#39E58C]">Senarai Ahli &amp; Pentadbir</h2>
+          <p class="text-xs text-gray-400">Luluskan pendaftaran baharu atau urus peranan pentadbir.</p>
+        </div>
+        <button id="refreshMembersBtn" class="text-xs text-[#37DDF4] hover:underline">Muat Semula</button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-[#1A3831] text-gray-400">
+              <th class="py-2.5 px-3">Nama &amp; E-mel</th>
+              <th class="py-2.5 px-3">Peranan</th>
+              <th class="py-2.5 px-3">Status</th>
+              <th class="py-2.5 px-3 text-right">Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="membersTable" class="divide-y divide-[#1A3831]/60">
+            <tr><td colspan="4" class="py-4 px-3 text-center text-gray-400">Memuatkan senarai ahli...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const alertBox = document.getElementById('alertBox');
+
+    function notify(msg, isError = false) {
+      alertBox.textContent = msg;
+      alertBox.className = isError
+        ? 'rounded-lg p-3.5 text-xs leading-relaxed bg-red-950/70 border border-red-500/50 text-red-200'
+        : 'rounded-lg p-3.5 text-xs leading-relaxed bg-emerald-950/70 border border-[#39E58C]/50 text-[#39E58C]';
+      alertBox.classList.remove('hidden');
+    }
+
+    async function loadSession() {
+      const res = await fetch('/api/me');
+      if (!res.ok) {
+        window.location.href = '/login';
+        return;
+      }
+      const data = await res.json();
+      if (!data.ok || (data.member.role !== 'admin' && data.member.role !== 'secondary_admin')) {
+        window.location.href = '/login';
+        return;
+      }
+      document.getElementById('adminName').textContent = data.member.display_name;
+      document.getElementById('adminEmail').textContent = `${data.member.email} • Peranan: ${data.member.role.toUpperCase()}`;
+      loadMembers();
+    }
+
+    async function loadMembers() {
+      const tbody = document.getElementById('membersTable');
+      const res = await fetch('/api/admin/members');
+      const data = await res.json();
+      if (!data.ok) return;
+
+      tbody.innerHTML = data.members.map(m => `
+        <tr class="hover:bg-[#132924]/40">
+          <td class="py-3 px-3">
+            <p class="font-semibold text-white">${m.display_name}</p>
+            <p class="text-gray-400">${m.email}</p>
+          </td>
+          <td class="py-3 px-3">
+            <span class="px-2 py-0.5 rounded bg-[#132924] border border-[#1A3831] text-[#D7B46A]">${m.role}</span>
+          </td>
+          <td class="py-3 px-3">
+            <span class="px-2 py-0.5 rounded ${m.status === 'active' ? 'bg-emerald-950 text-[#39E58C]' : 'bg-amber-950 text-amber-300'}">${m.status}</span>
+          </td>
+          <td class="py-3 px-3 text-right space-x-2">
+            ${m.status !== 'active' ? `<button onclick="updateStatus('${m.id}', 'active')" class="px-2.5 py-1 rounded bg-[#39E58C] text-[#081210] font-bold">Luluskan</button>` : ''}
+            ${m.status === 'active' && m.role === 'member' ? `<button onclick="updateStatus('${m.id}', 'suspended')" class="px-2.5 py-1 rounded bg-red-950 text-red-300 border border-red-500/40">Gantung</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function updateStatus(memberId, status) {
+      const res = await fetch('/api/admin/members/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, status })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        notify('Status ahli berjaya dikemas kini kepada: ' + status);
+        loadMembers();
+      } else {
+        notify(data.error || 'Gagal mengemas kini status.', true);
+      }
+    }
+
+    document.getElementById('syncBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('syncBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sedang menyegerakkan Zenodo...';
+      try {
+        const res = await fetch('/api/admin/sync-zenodo', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          const m = data.result.main;
+          const s = data.result.sassi;
+          notify(`Penyegerakan Selesai! XR6 Hub (${m.communitySlug}): ${m.count || 0} rekod | SASSI (${s.communitySlug}): ${s.count || 0} rekod.`);
+        } else {
+          notify(data.error || 'Ralat penyegerakan Zenodo.', true);
+        }
+      } catch (err) {
+        notify('Ralat rangkaian: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Segerakkan Rekod Zenodo (Sync Now)';
+      }
+    });
+
+    document.getElementById('refreshMembersBtn').addEventListener('click', loadMembers);
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+
+    loadSession();
+  </script>
+</body>
+</html>
