@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log Masuk / Login – XR6 Labs HQ</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
+
+  <header class="border-b border-[#1A3831] bg-[#081210]/95">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>XR6 LABS HQ</span>
+      </a>
+      <a href="/" class="text-xs text-[#39E58C] hover:underline">← Kembali ke Utama</a>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="xr6-card w-full max-w-md p-6 sm:p-8 space-y-6">
+      <div class="text-center space-y-2">
+        <p class="font-serif text-xl text-[#D7B46A]" dir="rtl" lang="ar">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+        <h1 class="text-2xl font-bold text-white">Log Masuk Portal Penyelidik</h1>
+        <p class="text-xs text-gray-400">Pengesahan tanpa kata laluan (Magic Link) melalui Zoho ZeptoMail.</p>
+      </div>
+
+      <div id="statusBox" class="hidden rounded-lg p-3 text-xs leading-relaxed"></div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="emailInput" class="block text-xs font-semibold text-gray-300 mb-1.5">Alamat E-mel Rasmi / Akademik</label>
+          <input
+            type="email"
+            id="emailInput"
+            required
+            placeholder="cth: hq@ac.xr6labs.com"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-sm focus:outline-none focus:border-[#39E58C]"
+          />
+        </div>
+
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAACAH1chVAeqHGXeU" data-theme="dark"></div>
+
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-sm hover:opacity-90 transition"
+        >
+          Hantar Pautan Pengesahan (Magic Link)
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-[#1A3831] text-center text-[11px] text-gray-400">
+        Dilindungi oleh penyulitan SHA-256 &amp; Cloudflare Turnstile.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const statusBox = document.getElementById('statusBox');
+
+    function showStatus(msg, isError = false) {
+      statusBox.textContent = msg;
+      statusBox.className = isError
+        ? 'rounded-lg p-3 text-xs leading-relaxed bg-red-950/70 border border-red-500/50 text-red-200'
+        : 'rounded-lg p-3 text-xs leading-relaxed bg-emerald-950/70 border border-[#39E58C]/50 text-[#39E58C]';
+      statusBox.classList.remove('hidden');
+    }
+
+    if (params.get('error') === 'invalid_or_expired') {
+      showStatus('Pautan pengesahan tidak sah atau telah tamat tempoh (15 minit). Sila minta pautan baharu.', true);
+    } else if (params.get('error') === 'missing_token') {
+      showStatus('Token pengesahan tiada. Sila cuba log masuk semula.', true);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const email = document.getElementById('emailInput').value.trim();
+      const turnstileInput = document.querySelector('[name="cf-turnstile-response"]');
+      const turnstileToken = turnstileInput ? turnstileInput.value : '';
+
+      btn.disabled = true;
+      btn.textContent = 'Sedang menghantar...';
+
+      try {
+        const res = await fetch('/api/auth/request-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, turnstileToken })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showStatus('Pautan pengesahan telah dihantar ke ' + email + '. Sila semak peti masuk (Inbox / Spam) anda dalam masa 15 minit.');
+        } else {
+          showStatus(data.error || 'Gagal menghantar pautan pengesahan.', true);
+        }
+      } catch (err) {
+        showStatus('Ralat rangkaian: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Hantar Pautan Pengesahan (Magic Link)';
+      }
+    });
+  </script>
+</body>
+</html>
