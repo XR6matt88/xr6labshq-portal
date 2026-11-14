@@ -5,13 +5,14 @@ compatibility_date = "2026-11-10"
 [assets]
 directory = "./public"
 binding = "ASSETS"
-not_found_handling = "single-page-application"
-run_worker_first = true
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"
+run_worker_first = ["/api/*"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "xr6-labs-staging"
-database_id = "048594e4-ed5a-4101-bc1b-463e77abf963"
+database_name = "GANTI_NAMA_DATABASE_D1_ANDA"
+database_id = "GANTI_DATABASE_ID_D1_ANDA"
 
 [vars]
 APP_ENV = "production"
