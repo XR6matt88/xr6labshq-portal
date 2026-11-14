@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Library – XR6 Labs HQ</title>
+  <link rel="stylesheet" href="/assets/site.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
+
+  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>XR6 LABS HQ</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-xs text-gray-300 hover:text-[#39E58C]">Utama</a>
+        <a href="/login" class="px-3 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-semibold text-xs">Log masuk</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
+    <section class="xr6-card p-6 sm:p-8 space-y-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-[#39E58C]">Open Science &amp; Zenodo Repository</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-white mt-1">XR6 Research Library</h1>
+        <p class="text-xs sm:text-sm text-gray-300 mt-1">Koleksi rasmi kertas kerja, laporan teknikal, set data dan modul akademik daripada komuniti Zenodo XR6 Labs HQ dan XR6 BSA – SASSI.</p>
+      </div>
+
+      <!-- Penapis & Carian -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Cari tajuk, abstrak atau pengarang..."
+          class="sm:col-span-2 px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]"
+        />
+        <select
+          id="communitySelect"
+          class="px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]"
+        >
+          <option value="">Semua Komuniti Zenodo</option>
+          <option value="xr6labshqhub">XR6 Labs HQ – Research Hub</option>
+          <option value="xr6-bsa-sassi">XR6 BSA – SASSI Academic</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Senarai Rekod -->
+    <div id="recordsContainer" class="grid grid-cols-1 gap-4">
+      <div class="xr6-card p-6 text-center text-xs text-gray-400">Memuatkan katalog penyelidikan...</div>
+    </div>
+  </main>
+
+  <script>
+    const container = document.getElementById('recordsContainer');
+    const searchInput = document.getElementById('searchInput');
+    const communitySelect = document.getElementById('communitySelect');
+
+    async function fetchRecords() {
+      const q = searchInput.value.trim();
+      const community = communitySelect.value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (community) params.set('community', community);
+
+      const res = await fetch('/api/records?' + params.toString());
+      const data = await res.json();
+
+      if (!data.ok || !data.records.length) {
+        container.innerHTML = `
+          <div class="xr6-card p-8 text-center space-y-2">
+            <p class="text-sm font-semibold text-white">Tiada rekod dijumpai buat masa ini.</p>
+            <p class="text-xs text-gray-400">Jika ini pelancaran baharu, pentadbir perlu menjalankan penyegerakan Zenodo (Sync Now) di papan pemuka Admin.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = data.records.map(r => {
+        let authors = [];
+        try { authors = JSON.parse(r.authors_json || '[]'); } catch (e) {}
+        const authorNames = authors.map(a => a.name).join(', ') || 'XR6 Research Team';
+        const cleanAbstract = (r.abstract || '').replace(/<[^>]*>?/gm, '').slice(0, 260);
+
+        return `
+          <article class="xr6-card p-6 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <span class="px-2.5 py-0.5 rounded-full bg-[#132924] border border-[#1A3831] text-[#39E58C] font-semibold">
+                ${r.community_title}
+              </span>
+              <span class="text-gray-400">${r.publication_date || ''} • ${r.resource_type}</span>
+            </div>
+
+            <h2 class="text-base sm:text-lg font-bold text-white leading-snug">
+              <a href="${r.zenodo_url}" target="_blank" rel="noopener" class="hover:text-[#D7B46A] transition">${r.title}</a>
+            </h2>
+
+            <p class="text-xs text-[#9BBFFF]">${authorNames}</p>
+
+            ${cleanAbstract ? `<p class="text-xs text-gray-300 leading-relaxed">${cleanAbstract}...</p>` : ''}
+
+            <div class="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#1A3831]/60 text-xs">
+              <span class="text-gray-400 font-mono text-[11px]">DOI: ${r.version_doi || 'Zenodo Record #' + r.zenodo_id}</span>
+              <a href="${r.zenodo_url}" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold hover:opacity-90 transition">
+                Buka di Zenodo ↗
+              </a>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    let timer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(fetchRecords, 350);
+    });
+    communitySelect.addEventListener('change', fetchRecords);
+
+    fetchRecords();
+  </script>
+</body>
+</html>
