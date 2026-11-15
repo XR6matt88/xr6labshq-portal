@@ -3,61 +3,319 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XR6 BSA – SASSI Academic Programme</title>
+  <title>XR6 Academic Programme (XR6 BSA – SASSI) – XR6 Labs HQ™</title>
+  <meta name="description" content="Memperkasa Kelestarian Ilmu, Penyelidikan Transdisiplin & Inovasi Kejuruteraan Bioperubatan Berpaksikan Tauhid melalui XR6 BSA – SASSI." />
   <link rel="stylesheet" href="/assets/site.css" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
-  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
-        <span>XR6 ACADEMIC</span>
+
+  <!-- BAR NAVIGASI TETAP (FIXED/STICKY HEADER) -->
+  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-sm sm:text-base shrink-0">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/60 text-[#D7B46A] font-serif text-sm font-bold">
+          XR6
+        </span>
+        <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px] ml-0.5">™</sup></span>
       </a>
-      <a href="/library" class="text-xs text-[#39E58C] hover:underline">Lihat Penerbitan SASSI →</a>
+
+      <nav class="hidden lg:flex items-center gap-5 text-xs font-medium text-gray-300">
+        <a href="/" class="hover:text-[#39E58C] transition">Utama</a>
+        <a href="/about" class="hover:text-[#39E58C] transition">Tentang HQ</a>
+        <a href="/research-engineering" class="hover:text-[#39E58C] transition">Research &amp; Engineering</a>
+        <a href="/research-hub" class="hover:text-[#39E58C] transition">Research Hub</a>
+        <a href="/library" class="hover:text-[#39E58C] transition">Library</a>
+        <a href="/xr6-academic/sassi" class="text-[#39E58C] font-bold">XR6 Academic</a>
+        <a href="/policies" class="hover:text-[#39E58C] transition">Polisi</a>
+      </nav>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="btnLanguage" class="px-2.5 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-bold text-xs hover:bg-[#132924] transition cursor-pointer">
+          BM | EN
+        </button>
+        <a href="/login" id="btnLogin" class="px-3.5 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-xs hover:opacity-90 transition">
+          Log masuk
+        </a>
+      </div>
+    </div>
+
+    <!-- Bar Tab Pilihan Halaman untuk Telefon & Tablet (Sentiasa Kekal di Atas) -->
+    <div class="lg:hidden border-t border-[#1A3831]/70 bg-[#060E0C]/95 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs text-gray-300 whitespace-nowrap">
+      <a href="/" class="hover:text-[#39E58C]">Utama</a>
+      <a href="/about" class="hover:text-[#39E58C]">Tentang HQ</a>
+      <a href="/research-engineering" class="hover:text-[#39E58C]">Research &amp; Engineering</a>
+      <a href="/research-hub" class="hover:text-[#39E58C]">Research Hub</a>
+      <a href="/library" class="hover:text-[#39E58C]">Library</a>
+      <a href="/xr6-academic/sassi" class="text-[#39E58C] font-bold">XR6 Academic</a>
+      <a href="/policies" class="hover:text-[#39E58C]">Polisi</a>
     </div>
   </header>
 
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
-    <section class="xr6-card p-6 sm:p-8 space-y-4">
-      <p class="text-xs font-bold uppercase tracking-widest text-[#D7B46A]">XR6 Academic Programme</p>
-      <h1 class="text-2xl sm:text-4xl font-bold text-white">XR6 BSA – SASSI Academic Programme</h1>
-      <p class="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-3xl">
-        Inisiatif sokongan penyelidikan akademik, pembangunan modul pengajian bersepadu, dan penerbitan ilmiah terbuka untuk pelajar serta pensyarah Institusi Pengajian Tinggi (IPT).
+  <!-- KANDUNGAN UTAMA -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 sm:py-10 space-y-6">
+
+    <!-- Kad Hero & Bio Bahagian Akademik -->
+    <section class="xr6-card p-6 sm:p-8 space-y-5 relative overflow-hidden">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#081210]/90 border border-[#D7B46A]/40 text-[#D7B46A] text-[10px] font-bold uppercase tracking-widest">
+        <span id="badgeText">SAYAP PENDIDIKAN TINGGI &bull; XR6 BSA – SASSI</span>
+      </div>
+
+      <div class="space-y-2.5">
+        <h1 id="acadTitle" class="text-2xl sm:text-4xl font-bold text-white leading-tight">
+          XR6 Academic Programme (XR6 BSA – SASSI)
+        </h1>
+        <p id="acadSubtitle" class="text-sm sm:text-base font-semibold text-[#39E58C] leading-relaxed">
+          Memperkasa Kelestarian Ilmu, Penyelidikan Transdisiplin &amp; Inovasi Kejuruteraan Bioperubatan Berpaksikan Tauhid
+        </p>
+      </div>
+
+      <p id="acadBio" class="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-4xl">
+        XR6 Academic merupakan sayap pendidikan tinggi, kesarjanaan, dan pembangunan modal insan saintifik di bawah naungan <strong>XR6 Labs HQ&trade; – Research &amp; Engineering Institute</strong>. Melalui inisiatif strategik <strong>XR6 BSA – SASSI</strong> (<em>Sustainable Academic &amp; Scientific Synergy Initiative</em>), bahagian ini berperanan sebagai jambatan antara penyelidikan berimpak tinggi dengan institusi pengajian tinggi (IPT), sarjana, serta penyelidik bebas di peringkat nasional dan antarabangsa.
       </p>
+
       <div class="pt-2 flex flex-wrap gap-3">
-        <a href="/library" class="px-5 py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-xs sm:text-sm">Terokai Modul &amp; Kertas Kerja</a>
-        <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="px-5 py-2.5 rounded-lg bg-[#132924] border border-[#1A3831] text-white font-semibold text-xs sm:text-sm hover:border-[#D7B46A]">
-          Zenodo XR6-BSA-SASSI ↗
+        <a href="/library?community=xr6-bsa-sassi" id="btnExploreModules" class="px-5 py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-xs sm:text-sm hover:opacity-95 transition">
+          Terokai Katalog XR6 BSA – SASSI
+        </a>
+        <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" id="btnZenodoOfficial" class="px-5 py-2.5 rounded-lg bg-[#132924] border border-[#1A3831] text-white font-semibold text-xs sm:text-sm hover:border-[#D7B46A] transition">
+          Komuniti Zenodo SASSI ↗
         </a>
         <a id="myZenodoCommunityBtn" href="/login" class="px-5 py-2.5 rounded-lg bg-[#081210] border border-[#39E58C]/60 text-[#39E58C] font-semibold text-xs sm:text-sm hover:bg-[#132924] transition">
           Akaun / Komuniti Zenodo Saya
         </a>
       </div>
     </section>
+
+    <!-- 3 Fokus Teras XR6 Academic -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <article class="xr6-card p-6 space-y-3 border-t-2 border-t-[#37DDF4]">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#37DDF4]">Pillar 01</span>
+          <span class="text-lg">🧬</span>
+        </div>
+        <h2 id="pillar1Title" class="text-base sm:text-lg font-bold text-white">
+          Kejuruteraan Bioperubatan &amp; Sains Kesihatan Bersepadu
+        </h2>
+        <p id="pillar1Desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+          Menerajui penyelidikan gunaan dalam teknologi perubatan, analisis biometrik, sistem sokongan diagnostik pintar, dan pematuhan tadbir urus data kesihatan yang beretika serta selamat.
+        </p>
+      </article>
+
+      <article class="xr6-card p-6 space-y-3 border-t-2 border-t-[#39E58C]">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#39E58C]">Pillar 02</span>
+          <span class="text-lg">📚</span>
+        </div>
+        <h2 id="pillar2Title" class="text-base sm:text-lg font-bold text-white">
+          Penerbitan Terbuka &amp; Integriti Saintifik
+        </h2>
+        <p id="pillar2Desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+          Menyokong ekosistem Open Science melalui pengarkiban repositori berindeks (Zenodo &amp; ORCID), penilaian penyelidikan yang adil (selaras dengan deklarasi DORA), serta penyebaran ilmu yang telus dan bebas daripada manipulasi.
+        </p>
+      </article>
+
+      <article class="xr6-card p-6 space-y-3 border-t-2 border-t-[#D7B46A]">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#D7B46A]">Pillar 03</span>
+          <span class="text-lg">🌐</span>
+        </div>
+        <h2 id="pillar3Title" class="text-base sm:text-lg font-bold text-white">
+          Sinergi Akademik &amp; Pembangunan Bakat
+        </h2>
+        <p id="pillar3Desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+          Menyediakan platform kolaborasi rentas disiplin yang menggabungkan kecanggihan kecerdasan buatan (AI), keselamatan kriptografi, dan pengkomputeran lestari (Eco-Compute) dengan pandangan alam (worldview) Tauhid demi melahirkan generasi saintis dan jurutera yang berintegriti tinggi serta berbakti kepada ummah.
+        </p>
+      </article>
+    </section>
+
+    <!-- Kotak Misi & Visi Akademik + Pautan Komuniti Rasmi -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div class="lg:col-span-8 xr6-card p-6 sm:p-7 space-y-3 border-l-4 border-l-[#D7B46A]">
+        <p id="missionEyebrow" class="text-xs font-bold uppercase tracking-widest text-[#D7B46A]">
+          Misi &amp; Visi Akademik
+        </p>
+        <h2 id="missionHeading" class="text-lg sm:text-xl font-bold text-white">
+          Misi Kesarjanaan XR6 BSA – SASSI
+        </h2>
+        <p id="missionText" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+          Mendemokrasikan akses kepada prasarana penyelidikan bertaraf dunia, memperkukuh jaringan penerbitan saintifik berwibawa dalam bidang kejuruteraan, perubatan, dan teknologi digital, serta membina ekosistem kesarjanaan yang menjunjung kebenaran dan nilai kemanusiaan.
+        </p>
+      </div>
+
+      <div class="lg:col-span-4 xr6-card p-6 sm:p-7 space-y-3 flex flex-col justify-between bg-[#0E1F1B]">
+        <div class="space-y-2">
+          <p id="repoEyebrow" class="text-xs font-bold uppercase tracking-widest text-[#39E58C]">
+            Pautan Komuniti Rasmi
+          </p>
+          <p id="repoText" class="text-xs text-gray-300 leading-relaxed">
+            Disepadukan secara terus dengan repositori akademik Zenodo (<code>xr6-bsa-sassi</code>) dan XR6 Research Library berindeks DOI &amp; ORCID.
+          </p>
+        </div>
+        <div class="pt-3 flex flex-col gap-2">
+          <a href="/register" id="btnJoinScholar" class="w-full text-center px-4 py-2 rounded-lg bg-[#FF6A00] text-[#081210] font-bold text-xs hover:opacity-95 transition">
+            Daftar Ahli Penyelidik SASSI
+          </a>
+          <a href="/about" id="btnGovernance" class="w-full text-center px-4 py-2 rounded-lg bg-[#081210] border border-[#1A3831] text-gray-200 font-semibold text-xs hover:border-[#39E58C] transition">
+            Tadbir Urus &amp; Pengijazahan Ilmu
+          </a>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <footer class="border-t border-[#1A3831] bg-[#060E0C] py-6 px-4 text-xs text-gray-400 text-center">
-    XR6 Labs HQ – Research &amp; Engineering • Pendang, Kedah Darul Aman, Malaysia
+  <!-- FOOTER -->
+  <footer class="border-t border-[#1A3831] bg-[#060E0C] py-8 px-4 text-xs text-gray-400 mt-8">
+    <div class="max-w-6xl mx-auto space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <p class="font-bold text-white text-sm">&copy; 2026 XR6 Labs HQ&trade; &amp; XR6 BSA – SASSI&trade;</p>
+          <p>26A, Kg. Banggol Petai, Mukim Air Putih, 06700 Pendang, Kedah Darul Aman, Malaysia</p>
+          <div class="flex flex-wrap gap-4 pt-1 text-[#39E58C]">
+            <a href="/about" class="hover:underline">Tentang HQ &amp; Tadbir Urus</a>
+            <a href="/policies" class="hover:underline">Notis Privasi (PDPA) &amp; Polisi</a>
+            <a href="mailto:hq@ac.xr6labs.com" class="hover:underline">hq@ac.xr6labs.com</a>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <a href="https://zenodo.org/communities/xr6labshqhub" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#39E58C] transition">Zenodo Hub</a>
+          <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#D7B46A] transition">Zenodo SASSI</a>
+          <a href="https://orcid.org" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#39E58C] transition">ORCID</a>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-[#1A3831]/70 flex flex-col sm:flex-row justify-between gap-2 text-[11px] text-gray-500">
+        <p>Signatory of DORA &bull; ISO/IEC 27001 &bull; SOC 2 Type II &bull; HIPAA &amp; PDPA Aligned</p>
+        <p>XR6 Academic Programme (XR6 BSA – SASSI)</p>
+      </div>
+    </div>
   </footer>
 
   <script>
-    (async function() {
-      var btn = document.getElementById('myZenodoCommunityBtn');
-      try {
-        var res = await fetch('/api/me');
-        if (!res.ok) return;
-        var data = await res.json();
-        if (data.ok && data.member && data.member.role === 'member') {
-          btn.href = 'https://zenodo.org/me/communities';
-          btn.target = '_blank';
-          btn.rel = 'noopener';
-          btn.textContent = 'Komuniti Zenodo Saya ↗';
-        } else if (data.ok && data.member) {
-          btn.href = '/admin';
-          btn.textContent = 'Urus Komuniti (Admin)';
+    (function() {
+      var lang = 'BM';
+      var currentRole = null;
+
+      var dict = {
+        BM: {
+          btnLang: 'BM | EN',
+          btnLoginGuest: 'Log masuk',
+          badgeText: 'SAYAP PENDIDIKAN TINGGI • XR6 BSA – SASSI',
+          acadTitle: 'XR6 Academic Programme (XR6 BSA – SASSI)',
+          acadSubtitle: 'Memperkasa Kelestarian Ilmu, Penyelidikan Transdisiplin & Inovasi Kejuruteraan Bioperubatan Berpaksikan Tauhid',
+          acadBio: 'XR6 Academic merupakan sayap pendidikan tinggi, kesarjanaan, dan pembangunan modal insan saintifik di bawah naungan <strong>XR6 Labs HQ™ – Research &amp; Engineering Institute</strong>. Melalui inisiatif strategik <strong>XR6 BSA – SASSI</strong> (<em>Sustainable Academic &amp; Scientific Synergy Initiative</em>), bahagian ini berperanan sebagai jambatan antara penyelidikan berimpak tinggi dengan institusi pengajian tinggi (IPT), sarjana, serta penyelidik bebas di peringkat nasional dan antarabangsa.',
+          btnExploreModules: 'Terokai Katalog XR6 BSA – SASSI',
+          btnZenodoOfficial: 'Komuniti Zenodo SASSI ↗',
+          myZenodoGuest: 'Akaun / Komuniti Zenodo Saya',
+          myZenodoMember: 'Komuniti Zenodo Saya ↗',
+          myZenodoAdmin: 'Urus Komuniti (Admin)',
+          pillar1Title: 'Kejuruteraan Bioperubatan & Sains Kesihatan Bersepadu',
+          pillar1Desc: 'Menerajui penyelidikan gunaan dalam teknologi perubatan, analisis biometrik, sistem sokongan diagnostik pintar, dan pematuhan tadbir urus data kesihatan yang beretika serta selamat.',
+          pillar2Title: 'Penerbitan Terbuka & Integriti Saintifik',
+          pillar2Desc: 'Menyokong ekosistem Open Science melalui pengarkiban repositori berindeks (Zenodo & ORCID), penilaian penyelidikan yang adil (selaras dengan deklarasi DORA), serta penyebaran ilmu yang telus dan bebas daripada manipulasi.',
+          pillar3Title: 'Sinergi Akademik & Pembangunan Bakat',
+          pillar3Desc: 'Menyediakan platform kolaborasi rentas disiplin yang menggabungkan kecanggihan kecerdasan buatan (AI), keselamatan kriptografi, dan pengkomputeran lestari (Eco-Compute) dengan pandangan alam (worldview) Tauhid demi melahirkan generasi saintis dan jurutera yang berintegriti tinggi serta berbakti kepada ummah.',
+          missionEyebrow: 'Misi & Visi Akademik',
+          missionHeading: 'Misi Kesarjanaan XR6 BSA – SASSI',
+          missionText: 'Mendemokrasikan akses kepada prasarana penyelidikan bertaraf dunia, memperkukuh jaringan penerbitan saintifik berwibawa dalam bidang kejuruteraan, perubatan, dan teknologi digital, serta membina ekosistem kesarjanaan yang menjunjung kebenaran dan nilai kemanusiaan.',
+          repoEyebrow: 'Pautan Komuniti Rasmi',
+          repoText: 'Disepadukan secara terus dengan repositori akademik Zenodo (<code>xr6-bsa-sassi</code>) dan XR6 Research Library berindeks DOI &amp; ORCID.',
+          btnJoinScholar: 'Daftar Ahli Penyelidik SASSI',
+          btnGovernance: 'Tadbir Urus & Pengijazahan Ilmu'
+        },
+        EN: {
+          btnLang: 'EN | BM',
+          btnLoginGuest: 'Sign In',
+          badgeText: 'HIGHER EDUCATION WING • XR6 BSA – SASSI',
+          acadTitle: 'XR6 Academic Programme (XR6 BSA – SASSI)',
+          acadSubtitle: 'Advancing Sustainable Scholarship, Transdisciplinary Research & Biomedical Engineering Anchored on Tawhidic Values',
+          acadBio: 'XR6 Academic serves as the higher education, scholarly advancement, and scientific talent development arm of <strong>XR6 Labs HQ™ – Research &amp; Engineering Institute</strong>. Spearheaded through the <strong>XR6 BSA – SASSI</strong> (<em>Sustainable Academic &amp; Scientific Synergy Initiative</em>), this division bridges high-impact engineering and scientific inquiry with universities, scholars, and independent researchers globally.',
+          btnExploreModules: 'Explore XR6 BSA – SASSI Catalogue',
+          btnZenodoOfficial: 'SASSI Zenodo Community ↗',
+          myZenodoGuest: 'My Zenodo Account / Community',
+          myZenodoMember: 'My Zenodo Communities ↗',
+          myZenodoAdmin: 'Manage Community (Admin)',
+          pillar1Title: 'Biomedical Engineering & Integrated Health Sciences',
+          pillar1Desc: 'Advancing applied research in ethical medical technologies, biometric analytics, intelligent diagnostic support systems, and secure clinical & health data governance.',
+          pillar2Title: 'Open Science & Research Integrity',
+          pillar2Desc: 'Championing transparent scholarly publishing via indexed repositories (Zenodo & ORCID), fair research assessment aligned with the DORA declaration, and verifiable dissemination free from manipulation.',
+          pillar3Title: 'Transdisciplinary Talent Synergy',
+          pillar3Desc: 'Uniting decentralized AI, cryptographic security, and sustainable computing (Eco-Compute) with a principled Tawhidic worldview and ethical stewardship to nurture high-integrity scientists and engineers for the betterment of humanity.',
+          missionEyebrow: 'Academic Mission & Vision',
+          missionHeading: 'XR6 BSA – SASSI Scholarly Mission',
+          missionText: 'Democratizing access to world-class research infrastructure, strengthening credible scientific publishing across engineering, medicine, and digital technology, and building a scholarly ecosystem rooted in truth and human welfare.',
+          repoEyebrow: 'Official Community Link',
+          repoText: 'Directly integrated with the academic Zenodo repository (<code>xr6-bsa-sassi</code>) and the DOI &amp; ORCID-indexed XR6 Research Library.',
+          btnJoinScholar: 'Register as SASSI Researcher',
+          btnGovernance: 'Governance & Scholarly Certification'
         }
-      } catch (e) {}
+      };
+
+      function applyLanguage() {
+        var t = dict[lang];
+        document.getElementById('btnLanguage').textContent = t.btnLang;
+        document.getElementById('badgeText').textContent = t.badgeText;
+        document.getElementById('acadTitle').textContent = t.acadTitle;
+        document.getElementById('acadSubtitle').textContent = t.acadSubtitle;
+        document.getElementById('acadBio').innerHTML = t.acadBio;
+        document.getElementById('btnExploreModules').textContent = t.btnExploreModules;
+        document.getElementById('btnZenodoOfficial').textContent = t.btnZenodoOfficial;
+        document.getElementById('pillar1Title').textContent = t.pillar1Title;
+        document.getElementById('pillar1Desc').textContent = t.pillar1Desc;
+        document.getElementById('pillar2Title').textContent = t.pillar2Title;
+        document.getElementById('pillar2Desc').textContent = t.pillar2Desc;
+        document.getElementById('pillar3Title').textContent = t.pillar3Title;
+        document.getElementById('pillar3Desc').textContent = t.pillar3Desc;
+        document.getElementById('missionEyebrow').textContent = t.missionEyebrow;
+        document.getElementById('missionHeading').textContent = t.missionHeading;
+        document.getElementById('missionText').textContent = t.missionText;
+        document.getElementById('repoEyebrow').textContent = t.repoEyebrow;
+        document.getElementById('repoText').innerHTML = t.repoText;
+        document.getElementById('btnJoinScholar').textContent = t.btnJoinScholar;
+        document.getElementById('btnGovernance').textContent = t.btnGovernance;
+
+        var myBtn = document.getElementById('myZenodoCommunityBtn');
+        var loginBtn = document.getElementById('btnLogin');
+        if (currentRole === 'member') {
+          myBtn.textContent = t.myZenodoMember;
+          loginBtn.textContent = lang === 'BM' ? 'Dashboard' : 'Dashboard';
+        } else if (currentRole === 'admin' || currentRole === 'secondary_admin') {
+          myBtn.textContent = t.myZenodoAdmin;
+          loginBtn.textContent = lang === 'BM' ? 'Admin HQ' : 'Admin HQ';
+        } else {
+          myBtn.textContent = t.myZenodoGuest;
+          loginBtn.textContent = t.btnLoginGuest;
+        }
+      }
+
+      document.getElementById('btnLanguage').addEventListener('click', function() {
+        lang = lang === 'BM' ? 'EN' : 'BM';
+        applyLanguage();
+      });
+
+      // Semak sesi (/api/me) untuk bezakan Guest vs Member vs Admin
+      (async function initSession() {
+        var myBtn = document.getElementById('myZenodoCommunityBtn');
+        var loginBtn = document.getElementById('btnLogin');
+        try {
+          var res = await fetch('/api/me');
+          if (!res.ok) return;
+          var data = await res.json();
+          if (!data.ok || !data.member) return;
+
+          currentRole = data.member.role;
+          if (currentRole === 'member') {
+            myBtn.href = 'https://zenodo.org/me/communities';
+            myBtn.target = '_blank';
+            myBtn.rel = 'noopener';
+            loginBtn.href = '/dashboard';
+          } else {
+            myBtn.href = '/admin';
+            loginBtn.href = '/admin';
+          }
+          applyLanguage();
+        } catch (e) {}
+      })();
     })();
   </script>
 </body>
