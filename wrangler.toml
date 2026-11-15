@@ -1,5 +1,5 @@
 name = "xr6labshq-portal"
-main = "worker.js"
+main = "src/index.js"
 compatibility_date = "2026-11-10"
 
 # Static assets (HTML/CSS/JS frontend)
@@ -23,15 +23,3 @@ ZEPTO_API_URL = "https://api.zeptomail.com/v1.1/email"
 # Cron trigger — auto-sync Zenodo every 30 minutes
 [triggers]
 crons = ["*/30 * * * *"]
-
-# ──────────────────────────────────────────────
-# SECRETS — JANGAN letak di sini!
-# Secret ini sudah dikonfigurasi dalam Worker dan kekal selepas deploy.
-# Jika perlu set semula, guna: npx wrangler secret put <NAME>
-#
-#   ORCID_CLIENT_ID
-#   ORCID_CLIENT_SECRET
-#   SESSION_SECRET
-#   TURNSTILE_SECRET_KEY
-#   ZEPTO_API_KEY
-# ──────────────────────────────────────────────
