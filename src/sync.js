@@ -40,6 +40,7 @@ function normaliseHit(hit, communitySlug, communityTitle) {
 
 async function fetchCommunityHits(communitySlug) {
   const urls = [
+    `https://zenodo.org/api/records?q=${encodeURIComponent(`communities:${communitySlug}`)}&size=100&sort=mostrecent`,
     `https://zenodo.org/api/communities/${encodeURIComponent(communitySlug)}/records?size=100&sort=newest`,
     `https://zenodo.org/api/records?communities=${encodeURIComponent(communitySlug)}&size=100&sort=mostrecent`
   ];
@@ -50,7 +51,7 @@ async function fetchCommunityHits(communitySlug) {
       const response = await fetch(apiUrl, {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; XR6LabsPortal/1.0; +https://xr6labs.com)'
+          'User-Agent': 'XR6LabsPortal/1.0 (+https://xr6labs.com)'
         }
       });
       if (!response.ok) {
