@@ -1,7 +1,9 @@
 function normaliseHit(hit, communitySlug, communityTitle) {
   const metadata = hit.metadata || {};
-  const creators = (metadata.creators || []).map(c => {
-    const cleanOrcid = c.orcid ? String(c.orcid).replace(/^https?:\/\/orcid\.org\//i, '').trim() : null;
+  const creators = (metadata.creators || []).map((c) => {
+    const cleanOrcid = c.orcid
+      ? String(c.orcid).replace(/^https?:\/\/orcid\.org\//i, '').trim()
+      : null;
     return {
       name: c.name || 'Unknown Author',
       affiliation: c.affiliation || '',
@@ -39,40 +41,34 @@ function normaliseHit(hit, communitySlug, communityTitle) {
 }
 
 async function fetchCommunityHits(communitySlug) {
-  // Menggunakan format kueri Zenodo REST API yang sah mengikut dokumentasi rasmi
-  const candidateUrls = [
-    `https://zenodo.org/api/records?q=communities%3A${encodeURIComponent(communitySlug)}&size=25`,
-    `https://zenodo.org/api/records?q=${encodeURIComponent(communitySlug)}&size=25`
-  ];
+  const allHits = [];
+  // Had maksimum Zenodo REST API tanpa token ialah size=25; guna links.next untuk halaman seterusnya
+  let nextUrl = `https://zenodo.org/api/records?communities=${encodeURIComponent(communitySlug)}&size=25&sort=newest`;
+  let pageGuard = 0;
 
-  let lastError = null;
-  for (const apiUrl of candidateUrls) {
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errText = await response.text().catch(() => '');
-        lastError = new Error(`HTTP ${response.status}: ${errText.slice(0, 150)}`);
-        continue;
+  while (nextUrl && pageGuard < 10) {
+    pageGuard += 1;
+    const response = await fetch(nextUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'XR6-Labs-HQ-Portal/1.0 (mailto:hq@ac.xr6labs.com)',
+        'Accept': 'application/json'
       }
+    });
 
-      const payload = await response.json();
-      const hits = payload.hits?.hits || [];
-      if (hits.length > 0) {
-        return hits;
-      }
-    } catch (err) {
-      lastError = err;
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`Zenodo API HTTP ${response.status}: ${errText.slice(0, 150)}`);
     }
+
+    const payload = await response.json();
+    const hits = payload.hits?.hits || [];
+    allHits.push(...hits);
+
+    nextUrl = payload.links?.next || null;
   }
 
-  if (lastError) throw lastError;
-  return [];
+  return allHits;
 }
 
 export async function syncZenodoCommunity(env, communitySlug, communityTitle) {
@@ -95,6 +91,7 @@ export async function syncZenodoCommunity(env, communitySlug, communityTitle) {
         ON CONFLICT(zenodo_id) DO UPDATE SET
           concept_doi = excluded.concept_doi,
           version_doi = excluded.version_doi,
+          community_slug = excluded.community_slug,
           community_title = excluded.community_title,
           title = excluded.title,
           abstract = excluded.abstract,
