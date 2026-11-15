@@ -126,77 +126,55 @@
       return (d.textContent || '').trim();
     }
 
-    // Butang Sync ORCID & Zenodo
+   // Semak sesi semasa (/api/me) untuk bezakan Guest vs Member vs Admin
+    (async function initUserZenodoAction() {
+      var personalBtn = document.getElementById('personalZenodoBtn');
+      var personalLabel = document.getElementById('personalZenodoLabel');
+      var adminSyncBtn = document.getElementById('syncOrcidBtn');
+
+      try {
+        var meRes = await fetch('/api/me');
+        if (!meRes.ok) return; // Guest: kekal menghala ke /login
+
+        var meData = await meRes.json();
+        if (!meData.ok || !meData.member) return;
+
+        var m = meData.member;
+        if (m.role === 'admin' || m.role === 'secondary_admin') {
+          personalBtn.href = '/admin';
+          personalLabel.textContent = 'Panel Admin HQ';
+          adminSyncBtn.classList.remove('hidden');
+        } else {
+          // Member biasa: pautan terus ke akaun Zenodo mereka sendiri (bukan owner)
+          if (m.orcid_id) {
+            personalBtn.href = 'https://zenodo.org/search?q=metadata.creators.orcid%3A%22' + encodeURIComponent(m.orcid_id) + '%22';
+            personalLabel.textContent = 'Rekod Zenodo Saya (' + m.orcid_id + ') ↗';
+          } else {
+            personalBtn.href = 'https://zenodo.org/me/uploads';
+            personalLabel.textContent = 'Akaun Zenodo Saya ↗';
+          }
+          personalBtn.target = '_blank';
+          personalBtn.rel = 'noopener';
+        }
+      } catch (e) {}
+    })();
+
+    // Butang Sync Admin sahaja
     document.getElementById('syncOrcidBtn').addEventListener('click', async function() {
       var btn = this;
       btn.disabled = true;
-      showToast('Menyemak sesi ORCID & menyegerakkan katalog...');
+      showToast('Menyegerakkan katalog Zenodo...');
       try {
         var syncRes = await fetch('/api/admin/sync-zenodo', { method: 'POST' });
         if (syncRes.ok) {
-          var sData = await syncRes.json();
-          showToast('Penyegerakan ORCID & Zenodo berjaya dikemas kini!');
+          showToast('Penyegerakan Zenodo berjaya dikemas kini!');
           fetchRecords();
-        } else if (syncRes.status === 401 || syncRes.status === 403) {
-          showToast('Sila log masuk untuk memautkan & menyegerakkan ORCID iD anda.');
-          setTimeout(function() { window.location.href = '/login'; }, 1200);
         } else {
-          fetchRecords();
+          showToast('Akses pentadbir diperlukan untuk penyegerakan manual.');
         }
       } catch (e) {
-        fetchRecords();
+        showToast('Ralat rangkaian semasa menyegerakkan.');
       } finally {
         btn.disabled = false;
       }
-    });
-
-    async function fetchRecords() {
-      var params = new URLSearchParams();
-      if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
-      if (communitySelect.value) params.set('community', communitySelect.value);
-
-      try {
-        var res = await fetch('/api/records?' + params.toString());
-        var data = await res.json();
-        if (!data.ok || !data.records.length) {
-          statsBadge.textContent = '0 Rekod';
-          container.innerHTML = '<div class="xr6-card p-8 text-center text-xs text-gray-400">Tiada rekod penerbitan dijumpai buat masa ini.</div>';
-          return;
-        }
-        statsBadge.innerHTML = '<strong class="text-[#39E58C]">' + data.records.length + '</strong> Penerbitan';
-        container.innerHTML = data.records.map(function(r) {
-          var authors = [];
-          try { authors = JSON.parse(r.authors_json || '[]'); } catch (e) {}
-          var authorText = authors.map(function(a) {
-            return a.orcid ? a.name + ' (ORCID: ' + a.orcid + ')' : a.name;
-          }).join(', ') || 'XR6 Research Team';
-          var abs = stripHtml(r.abstract);
-          if (abs.length > 260) abs = abs.slice(0, 260) + '...';
-
-          return '<article class="xr6-card p-6 space-y-3">' +
-            '<div class="flex flex-wrap justify-between gap-2 text-[11px]">' +
-              '<span class="px-2.5 py-0.5 rounded-full bg-[#132924] border border-[#1A3831] text-[#39E58C] font-semibold">' + escapeHtml(r.community_title) + '</span>' +
-              '<span class="text-gray-400">' + escapeHtml(r.publication_date || '') + ' &bull; ' + escapeHtml(r.resource_type) + '</span>' +
-            '</div>' +
-            '<h2 class="text-base sm:text-lg font-bold text-white"><a href="' + escapeHtml(r.zenodo_url) + '" target="_blank" rel="noopener" class="hover:text-[#D7B46A]">' + escapeHtml(r.title) + '</a></h2>' +
-            '<p class="text-xs text-[#9BBFFF]">' + escapeHtml(authorText) + '</p>' +
-            (abs ? '<p class="text-xs text-gray-300 leading-relaxed">' + escapeHtml(abs) + '</p>' : '') +
-            '<div class="pt-2 border-t border-[#1A3831]/60 flex justify-between items-center text-xs">' +
-              '<span class="font-mono text-[11px] text-gray-400">DOI: ' + escapeHtml(r.version_doi || 'Zenodo #' + r.zenodo_id) + '</span>' +
-              '<a href="' + escapeHtml(r.zenodo_url) + '" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold">Buka di Zenodo &nearr;</a>' +
-            '</div>' +
-          '</article>';
-        }).join('');
-      } catch (err) {
-        statsBadge.textContent = 'Ralat';
-      }
-    }
-
-    var t;
-    searchInput.addEventListener('input', function() { clearTimeout(t); t = setTimeout(fetchRecords, 350); });
-    communitySelect.addEventListener('change', fetchRecords);
-    resetBtn.addEventListener('click', function() { searchInput.value = ''; communitySelect.value = ''; fetchRecords(); });
-    fetchRecords();
-  </script>
-</body>
-</html>
+    }); 
