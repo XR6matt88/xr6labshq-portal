@@ -34,22 +34,27 @@
           </p>
         </div>
 
-        <!-- Butang Sync ORCID & Status Rekod -->
+        <!-- Butang Dinamik Mengikut Peranan (Guest / Member / Admin) & Status Rekod -->
         <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <a
+            id="personalZenodoBtn"
+            href="/login"
+            class="px-3.5 py-2 rounded-lg bg-[#132924] border border-[#39E58C]/60 text-[#39E58C] font-bold text-xs hover:bg-[#1A3831] transition flex items-center gap-2"
+          >
+            <span class="w-4 h-4 rounded-full bg-[#A6CE39] text-[#081210] font-extrabold text-[9px] inline-flex items-center justify-center">iD</span>
+            <span id="personalZenodoLabel">Log Masuk / Zenodo Saya</span>
+          </a>
           <button
             type="button"
             id="syncOrcidBtn"
-            class="px-3.5 py-2 rounded-lg bg-[#132924] border border-[#39E58C]/60 text-[#39E58C] font-bold text-xs hover:bg-[#1A3831] transition flex items-center gap-2 cursor-pointer"
+            class="hidden px-3.5 py-2 rounded-lg bg-[#FF6A00] text-[#081210] font-bold text-xs hover:opacity-95 transition cursor-pointer"
           >
-            <span class="w-4 h-4 rounded-full bg-[#A6CE39] text-[#081210] font-extrabold text-[9px] inline-flex items-center justify-center">iD</span>
-            <span>Sync ORCID &amp; Zenodo</span>
+            🔄 Sync Katalog (Admin)
           </button>
-
           <div id="statsBadge" class="px-3.5 py-2 rounded-lg bg-[#081210] border border-[#1A3831] text-xs text-gray-300">
             Memuatkan...
           </div>
         </div>
-      </div>
 
       <!-- Bar Carian & Penapis -->
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
