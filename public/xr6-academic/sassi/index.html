@@ -8,7 +8,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
-
   <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
     <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
@@ -31,6 +30,9 @@
         <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="px-5 py-2.5 rounded-lg bg-[#132924] border border-[#1A3831] text-white font-semibold text-xs sm:text-sm hover:border-[#D7B46A]">
           Zenodo XR6-BSA-SASSI ↗
         </a>
+        <a id="myZenodoCommunityBtn" href="/login" class="px-5 py-2.5 rounded-lg bg-[#081210] border border-[#39E58C]/60 text-[#39E58C] font-semibold text-xs sm:text-sm hover:bg-[#132924] transition">
+          Akaun / Komuniti Zenodo Saya
+        </a>
       </div>
     </section>
   </main>
@@ -38,5 +40,25 @@
   <footer class="border-t border-[#1A3831] bg-[#060E0C] py-6 px-4 text-xs text-gray-400 text-center">
     XR6 Labs HQ – Research &amp; Engineering • Pendang, Kedah Darul Aman, Malaysia
   </footer>
+
+  <script>
+    (async function() {
+      var btn = document.getElementById('myZenodoCommunityBtn');
+      try {
+        var res = await fetch('/api/me');
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data.ok && data.member && data.member.role === 'member') {
+          btn.href = 'https://zenodo.org/me/communities';
+          btn.target = '_blank';
+          btn.rel = 'noopener';
+          btn.textContent = 'Komuniti Zenodo Saya ↗';
+        } else if (data.ok && data.member) {
+          btn.href = '/admin';
+          btn.textContent = 'Urus Komuniti (Admin)';
+        }
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>
