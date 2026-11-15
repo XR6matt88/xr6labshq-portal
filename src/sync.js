@@ -39,29 +39,33 @@ function normaliseHit(hit, communitySlug, communityTitle) {
 }
 
 async function fetchCommunityHits(communitySlug) {
-  // Format rasmi Zenodo InvenioRDM REST API (mengelakkan ralat HTTP 400)
-  const urls = [
-    `https://zenodo.org/api/records?q=communities:${encodeURIComponent(communitySlug)}&sort=newest&size=25`,
-    `https://zenodo.org/api/communities/${encodeURIComponent(communitySlug)}/records?sort=newest&size=25`
+  // Menggunakan format kueri Zenodo REST API yang sah mengikut dokumentasi rasmi
+  const candidateUrls = [
+    `https://zenodo.org/api/records?q=communities%3A${encodeURIComponent(communitySlug)}&size=25`,
+    `https://zenodo.org/api/records?q=${encodeURIComponent(communitySlug)}&size=25`
   ];
 
   let lastError = null;
-  for (const apiUrl of urls) {
+  for (const apiUrl of candidateUrls) {
     try {
       const response = await fetch(apiUrl, {
+        method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'XR6LabsHQ/1.0 (https://xr6labs.com)'
+          'Accept': 'application/json'
         }
       });
+
       if (!response.ok) {
-        const errBody = await response.text().catch(() => '');
-        lastError = new Error(`Zenodo API HTTP ${response.status}: ${errBody.slice(0, 120)}`);
+        const errText = await response.text().catch(() => '');
+        lastError = new Error(`HTTP ${response.status}: ${errText.slice(0, 150)}`);
         continue;
       }
+
       const payload = await response.json();
       const hits = payload.hits?.hits || [];
-      return hits;
+      if (hits.length > 0) {
+        return hits;
+      }
     } catch (err) {
       lastError = err;
     }
