@@ -3,356 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XR6 Labs HQ™ – Research &amp; Engineering Institute</title>
-  <meta name="description" content="Menjana Kejuruteraan Bersepadu Berpaksikan Nilai Rabbani. Institut penyelidikan dan kejuruteraan bersepadu XR6 Labs HQ." />
+  <title>Log Masuk Portal Penyelidik – XR6 Labs HQ™</title>
   <link rel="stylesheet" href="/assets/site.css" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-[#081210] text-[#F1F5F4] antialiased hex-pattern flex flex-col">
 
-  <!-- Bar Navigasi Utama -->
-  <header class="sticky top-0 z-50 border-b border-[#1A3831] bg-[#081210]/95 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base sm:text-lg shrink-0">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold shadow-sm">
-          XR6
-        </span>
-        <span class="text-xs sm:text-sm md:text-base">XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px] ml-0.5">™</sup></span>
+  <header class="border-b border-[#1A3831] bg-[#081210]/95">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 text-white font-bold tracking-wider text-base">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
+        <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px]">™</sup></span>
       </a>
-
-      <nav class="hidden md:flex items-center gap-6 text-sm text-gray-300">
-        <a href="/about" id="navAbout" class="hover:text-[#39E58C] transition">Tentang HQ</a>
-        <a href="/research-engineering" id="navRE" class="hover:text-[#39E58C] transition">Research &amp; Engineering</a>
-        <a href="/research-hub" id="navHub" class="hover:text-[#39E58C] transition">Research Hub</a>
-        <a href="/library" id="navLib" class="hover:text-[#39E58C] transition">Library</a>
-        <a href="/xr6-academic/sassi" id="navAcad" class="hover:text-[#39E58C] transition">XR6 Academic</a>
-      </nav>
-
-      <!-- Butang Tukar Bahasa & Log Masuk -->
-      <div class="flex items-center gap-2.5 shrink-0">
-        <button
-          type="button"
-          id="btnLanguage"
-          aria-label="Tukar Bahasa"
-          class="px-2.5 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-bold text-xs tracking-wider hover:bg-[#132924] transition cursor-pointer"
-        >
-          BM | EN
-        </button>
-
-        <a href="/login" id="btnLogin" class="px-3.5 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-semibold text-xs sm:text-sm hover:opacity-90 transition">
-          Log masuk
-        </a>
-      </div>
-    </div>
-
-    <!-- Navigasi Pantas Telefon Pintar -->
-    <div class="md:hidden border-t border-[#1A3831]/60 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs text-gray-300 whitespace-nowrap">
-      <a href="/" id="mNavHome" class="text-[#39E58C] font-semibold">Utama</a>
-      <a href="/about" id="mNavAbout" class="hover:text-[#39E58C]">Tentang HQ</a>
-      <a href="/research-engineering" class="hover:text-[#39E58C]">Research &amp; Engineering</a>
-      <a href="/research-hub" class="hover:text-[#39E58C]">Research Hub</a>
-      <a href="/library" class="hover:text-[#39E58C]">Library</a>
-      <a href="/xr6-academic/sassi" class="hover:text-[#39E58C]">XR6 Academic</a>
+      <a href="/" class="text-xs text-[#39E58C] hover:underline">&larr; Kembali ke Utama</a>
     </div>
   </header>
 
-  <!-- Kandungan Utama -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 pb-16">
+  <main class="flex-1 flex items-center justify-center px-4 py-10">
+    <div class="xr6-card w-full max-w-md p-6 sm:p-8 space-y-6">
+      <div class="text-center space-y-2">
+        <p class="font-serif text-xl text-[#D7B46A]" dir="rtl" lang="ar">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+        <h1 class="text-2xl font-bold text-white">Log Masuk Portal Penyelidik</h1>
+        <p class="text-xs text-gray-400">Pengesahan tanpa kata laluan (Magic Link) melalui Zoho ZeptoMail</p>
+      </div>
 
-    <!-- Pembukaan Rasmi: Kalimah Bismillah Jawi Tashkeel -->
-    <div class="bismillah-wrapper">
-      <p class="bismillah-header" dir="rtl" lang="ar">
-        بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+      <div id="statusBox" class="hidden rounded-lg p-3.5 text-xs leading-relaxed"></div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="emailInput" class="block text-xs font-semibold text-gray-300 mb-1.5">
+            Alamat E-mel Rasmi / Akademik
+          </label>
+          <input
+            type="email"
+            id="emailInput"
+            required
+            placeholder="hq@ac.xr6labs.com"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-sm focus:outline-none focus:border-[#39E58C]"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-sm hover:opacity-95 transition cursor-pointer"
+        >
+          Hantar Pautan Pengesahan (Magic Link)
+        </button>
+      </form>
+
+      <p class="text-[11px] text-center text-gray-500">
+        Dilindungi oleh penyulitan SHA-256 &amp; Zoho ZeptoMail
       </p>
     </div>
-
-    <!-- Bahagian Jam Digital, Tarikh Miladi & Hijrah Tulisan Jawi -->
-    <section class="xr6-card p-4 sm:p-5 mb-6 border border-[#1A3831] bg-[#0E1F1B]/85 backdrop-blur flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-[#081210] border border-[#D7B46A]/45 text-[#D7B46A] shadow-md text-lg">
-          &#128737;
-        </span>
-        <div>
-          <h3 id="clockTitle" class="text-xs font-bold uppercase tracking-wider text-[#39E58C]">Jadual Waktu Semasa &amp; Falak HQ</h3>
-          <p id="clockSub" class="text-[11px] text-gray-400">Waktu Standard Malaysia (UTC+8) &bull; Pendang, Kedah</p>
-        </div>
-      </div>
-
-      <div class="flex flex-col sm:items-end text-center sm:text-right">
-        <div id="digitalClock" class="text-xl sm:text-2xl font-bold font-mono text-[#37DDF4] tracking-wider">--:--:--</div>
-        <div class="flex flex-wrap items-center gap-2 mt-1 justify-center sm:justify-end text-xs">
-          <span id="dateMiladi" class="text-gray-300 font-medium">Memuatkan tarikh...</span>
-          <span class="text-[#D7B46A]">&bull;</span>
-          <span id="dateHijri" class="text-[#D7B46A] font-serif text-sm" dir="rtl">Memuatkan hijrah...</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bahagian Hero Utama dengan Header Background Imej Perisai -->
-    <section
-      class="xr6-card p-6 sm:p-10 mb-8 relative overflow-hidden flex flex-col justify-end min-h-[320px] sm:min-h-[380px] border border-[#D7B46A]/30"
-      style="background-color: #0E1F1B; background-image: linear-gradient(180deg, rgba(8,18,16,0.28) 0%, rgba(8,18,16,0.82) 55%, rgba(8,18,16,0.97) 100%), url('/assets/xr6-shield-hero.jpg'); background-position: center; background-size: cover; background-repeat: no-repeat;"
-    >
-      <div class="max-w-3xl space-y-4 relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#081210]/90 border border-[#39E58C]/40 text-[#39E58C] text-[10px] font-bold uppercase tracking-widest">
-          INTEGRITY &bull; PROTECTION &bull; SILATURRAHIM
-        </div>
-
-        <h1 id="heroTitle" class="text-2xl sm:text-4xl md:text-5xl font-bold text-white leading-tight drop-shadow">
-          Menjana Kejuruteraan Bersepadu Berpaksikan Nilai Rabbani
-        </h1>
-
-        <p id="heroDesc" class="text-xs sm:text-sm md:text-base text-gray-200 leading-relaxed">
-          Di XR6 Labs HQ, kami mendakap keteguhan forged hardened steel dalam mempertahankan kebenaran sains dan teknologi, serta kelembutan berkasih sayang dalam jalinan silaturrahim sesama makhluk demi kemaslahatan ummah.
-        </p>
-
-        <div class="pt-2 flex flex-wrap items-center gap-3">
-          <a href="/library" id="btnExplore" class="px-5 py-2.5 rounded-lg bg-[#FF6A00] text-[#081210] font-bold text-xs sm:text-sm hover:opacity-95 transition">
-            Terokai Penyelidikan
-          </a>
-          <a href="/register" id="btnRegister" class="px-5 py-2.5 rounded-lg bg-[#132924]/90 border border-[#1A3831] text-white font-semibold text-xs sm:text-sm hover:border-[#39E58C] transition">
-            Daftar Ahli Penyelidik
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Kad Teras Utama -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <a href="/research-engineering" class="xr6-card p-6 block space-y-2.5 hover:scale-[1.01] transition duration-200">
-        <h2 id="card1Title" class="text-base sm:text-lg font-bold text-[#39E58C]">Research &amp; Engineering</h2>
-        <p id="card1Desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-          Meneroka sempadan baharu dalam AI terdesentralisasi, keselamatan kriptografi, pengkomputeran lestari (Eco-Compute) dan kejuruteraan bioperubatan.
-        </p>
-      </a>
-
-      <a href="/research-hub" class="xr6-card p-6 block space-y-2.5 hover:scale-[1.01] transition duration-200">
-        <h2 id="card2Title" class="text-base sm:text-lg font-bold text-[#39E58C]">Research Hub &amp; XR6 Academic</h2>
-        <p id="card2Desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-          Penyelidikan akademik berwibawa, integrasi komuniti Zenodo, serta kelestarian pendidikan tinggi melalui XR6 BSA – SASSI.
-        </p>
-      </a>
-    </section>
-
-    <!-- Bahagian Knowledge & Reflection -->
-    <section class="xr6-card p-6 sm:p-8 space-y-3">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <span id="labelReflection" class="text-xs font-bold uppercase tracking-wider text-[#D7B46A]">Knowledge &amp; Reflection</span>
-        <a href="/about" id="linkMore" class="text-xs text-[#37DDF4] hover:underline">Lihat wacana ilmu &rarr;</a>
-      </div>
-      <p id="reflectionDesc" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-        Menyepadukan kecanggihan sains, kemajuan teknologi digital, dan kejuruteraan moden yang diselaraskan dengan pandangan alam (worldview) Tauhid yang murni, menegakkan keadilan, serta kasih sayang yang melimpah.
-      </p>
-    </section>
-
   </main>
 
-  <!-- Footer Rasmi: Copyright, Trademark, Polisi & Pautan Sosial -->
-  <footer class="border-t border-[#1A3831] bg-[#060E0C] py-10 px-4 text-xs text-gray-400">
-    <div class="max-w-6xl mx-auto space-y-8">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div class="space-y-2">
-          <p class="font-bold text-white text-sm">XR6 Labs HQ<sup class="text-[#D7B46A] text-[10px]">™</sup> – Research &amp; Engineering Institute</p>
-          <p>26A, Kg. Banggol Petai, Mukim Air Putih, 06700 Pendang, Kedah Darul Aman, Malaysia</p>
-          <div class="flex flex-wrap gap-4 pt-1 text-[#39E58C]">
-            <a href="/about" id="fAbout" class="hover:underline">Tentang HQ &amp; Tadbir Urus</a>
-            <a href="/policies" id="fPolicy" class="hover:underline">Notis Privasi (PDPA) &amp; Polisi</a>
-            <a href="mailto:hq@ac.xr6labs.com" id="fContact" class="hover:underline">Hubungi HQ (hq@ac.xr6labs.com)</a>
-          </div>
-        </div>
-
-        <!-- Pautan Sosial & Komuniti Saintifik Rasmi -->
-        <div class="space-y-2">
-          <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Rangkaian Rasmi &amp; Repositori</p>
-          <div class="flex flex-wrap items-center gap-2.5">
-            <a href="https://zenodo.org/communities/xr6labshqhub" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#39E58C] hover:text-[#39E58C] transition">
-              Zenodo Hub
-            </a>
-            <a href="https://zenodo.org/communities/xr6-bsa-sassi" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#D7B46A] hover:text-[#D7B46A] transition">
-              Zenodo SASSI
-            </a>
-            <a href="https://orcid.org" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#39E58C] hover:text-[#39E58C] transition">
-              ORCID
-            </a>
-            <a href="https://github.com/XR6matt88" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#37DDF4] hover:text-[#37DDF4] transition">
-              GitHub
-            </a>
-            <a href="mailto:hq@ac.xr6labs.com" class="px-3 py-1.5 rounded-lg bg-[#0E1F1B] border border-[#1A3831] text-gray-200 hover:border-[#FF6A00] hover:text-[#FF6A00] transition">
-              E-mel Rasmi
-            </a>
-          </div>
-        </div>
-
-        <!-- Lencana Signatory of DORA -->
-        <a href="https://sfdora.org" target="_blank" rel="noopener" class="inline-flex items-center gap-3 border border-[#1A3831] bg-[#0E1F1B] rounded-lg px-3.5 py-2 hover:border-[#39E58C] transition shrink-0">
-          <span class="w-8 h-8 rounded-full bg-white text-[#081210] font-extrabold text-[10px] flex items-center justify-center tracking-tighter">
-            DORA
-          </span>
-          <div>
-            <p class="text-xs font-bold text-white">Signatory of DORA</p>
-            <p class="text-[11px] text-gray-400">Declaration on Research Assessment</p>
-          </div>
-        </a>
-      </div>
-
-      <!-- Footnote Hak Cipta & Cap Dagangan -->
-      <div class="pt-6 border-t border-[#1A3831]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-gray-400">
-        <p id="copyrightText">
-          &copy; 2026 <strong class="text-gray-200">XR6 Labs HQ&trade;</strong> &amp; <strong class="text-gray-200">XR6 BSA &ndash; SASSI&trade;</strong>. Hak Cipta Terpelihara / All Rights Reserved.
-        </p>
-        <p id="trademarkText" class="text-gray-500">
-          XR6 Labs HQ&trade;, logo perisai, dan tanda pengenalan berkaitan adalah tanda dagangan berdaftar/milik XR6 Labs HQ.
-        </p>
-      </div>
-    </div>
-  </footer>
-
   <script>
-    (function() {
-      // 1. Jam Digital Masa Nyata (UTC+8 Malaysia) + Tarikh Miladi & Hijrah Jawi
-      function toArabicDigits(num) {
-        var digits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-        return String(num).replace(/\d/g, function(d) { return digits[Number(d)]; });
-      }
+    const statusBox = document.getElementById('statusBox');
+    const params = new URLSearchParams(window.location.search);
 
-      var jawiMonths = [
-        'محرم', 'صفر', 'ربيع الاول', 'ربيع الاخر',
-        'جمادى الاولى', 'جمادى الاخرة', 'رجب', 'شعبان',
-        'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
-      ];
+    function showStatus(msg, isError = false) {
+      statusBox.textContent = msg;
+      statusBox.className = isError
+        ? 'rounded-lg p-3.5 text-xs leading-relaxed bg-red-950/75 border border-red-500/50 text-red-200'
+        : 'rounded-lg p-3.5 text-xs leading-relaxed bg-emerald-950/75 border border-[#39E58C]/50 text-[#39E58C]';
+      statusBox.classList.remove('hidden');
+    }
 
-      function updateClock() {
-        var now = new Date();
-        try {
-          var timeStr = now.toLocaleTimeString('en-US', {
-            timeZone: 'Asia/Kuala_Lumpur',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-          });
-          document.getElementById('digitalClock').textContent = timeStr;
+    if (params.get('error') === 'invalid_or_expired') {
+      showStatus('Pautan pengesahan tidak sah atau telah tamat tempoh (15 minit). Sila minta pautan baharu.', true);
+    }
 
-          var miladiStr = now.toLocaleDateString('ms-MY', {
-            timeZone: 'Asia/Kuala_Lumpur',
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          });
-          document.getElementById('dateMiladi').textContent = miladiStr;
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const email = document.getElementById('emailInput').value.trim();
 
-          var hijriParts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
-            timeZone: 'Asia/Kuala_Lumpur',
-            day: 'numeric',
-            month: 'numeric',
-            year: 'numeric'
-          }).formatToParts(now);
+      btn.disabled = true;
+      btn.textContent = 'Menghantar pautan...';
 
-          var hDay = '', hMonth = 1, hYear = '';
-          hijriParts.forEach(function(p) {
-            if (p.type === 'day') hDay = p.value;
-            if (p.type === 'month') hMonth = parseInt(p.value, 10);
-            if (p.type === 'year') hYear = p.value;
-          });
-
-          var monthJawi = jawiMonths[(hMonth - 1)] || 'جمادى الاولى';
-          document.getElementById('dateHijri').textContent =
-            toArabicDigits(hDay) + ' ' + monthJawi + ' ' + toArabicDigits(hYear) + ' هـ';
-        } catch (e) {
-          document.getElementById('digitalClock').textContent = now.toTimeString().slice(0, 8);
-        }
-      }
-
-      setInterval(updateClock, 1000);
-      updateClock();
-
-      // 2. Penukar Bahasa Penuh (BM <-> EN)
-      var currentLang = 'BM';
-      var dict = {
-        BM: {
-          btnLang: 'BM | EN',
-          navAbout: 'Tentang HQ',
-          btnLogin: 'Log masuk',
-          mNavHome: 'Utama',
-          mNavAbout: 'Tentang HQ',
-          clockTitle: 'Jadual Waktu Semasa & Falak HQ',
-          clockSub: 'Waktu Standard Malaysia (UTC+8) • Pendang, Kedah',
-          heroTitle: 'Menjana Kejuruteraan Bersepadu Berpaksikan Nilai Rabbani',
-          heroDesc: 'Di XR6 Labs HQ, kami mendakap keteguhan forged hardened steel dalam mempertahankan kebenaran sains dan teknologi, serta kelembutan berkasih sayang dalam jalinan silaturrahim sesama makhluk demi kemaslahatan ummah.',
-          btnExplore: 'Terokai Penyelidikan',
-          btnRegister: 'Daftar Ahli Penyelidik',
-          card1Title: 'Research & Engineering',
-          card1Desc: 'Meneroka sempadan baharu dalam AI terdesentralisasi, keselamatan kriptografi, pengkomputeran lestari (Eco-Compute) dan kejuruteraan bioperubatan.',
-          card2Title: 'Research Hub & XR6 Academic',
-          card2Desc: 'Penyelidikan akademik berwibawa, integrasi komuniti Zenodo, serta kelestarian pendidikan tinggi melalui XR6 BSA – SASSI.',
-          labelReflection: 'Knowledge & Reflection',
-          linkMore: 'Lihat wacana ilmu →',
-          reflectionDesc: 'Menyepadukan kecanggihan sains, kemajuan teknologi digital, dan kejuruteraan moden yang diselaraskan dengan pandangan alam (worldview) Tauhid yang murni, menegakkan keadilan, serta kasih sayang yang melimpah.',
-          fAbout: 'Tentang HQ & Tadbir Urus',
-          fPolicy: 'Notis Privasi (PDPA) & Polisi',
-          fContact: 'Hubungi HQ (hq@ac.xr6labs.com)',
-          copyrightText: '© 2026 XR6 Labs HQ™ & XR6 BSA – SASSI™. Hak Cipta Terpelihara.',
-          trademarkText: 'XR6 Labs HQ™, logo perisai, dan tanda pengenalan berkaitan adalah tanda dagangan milik XR6 Labs HQ.'
-        },
-        EN: {
-          btnLang: 'EN | BM',
-          navAbout: 'About HQ',
-          btnLogin: 'Sign In',
-          mNavHome: 'Home',
-          mNavAbout: 'About HQ',
-          clockTitle: 'HQ Live Time & Islamic Calendar',
-          clockSub: 'Malaysia Standard Time (UTC+8) • Pendang, Kedah',
-          heroTitle: 'Forging Integrated Engineering Anchored on Divine Values',
-          heroDesc: 'At XR6 Labs HQ, we uphold the resilience of forged hardened steel in defending scientific and technological truth, paired with heartfelt compassion in fostering silaturrahim across humanity.',
-          btnExplore: 'Explore Research',
-          btnRegister: 'Register Researcher',
-          card1Title: 'Research & Engineering',
-          card1Desc: 'Pioneering decentralized AI, cryptographic security, eco-sustainable computing (Eco-Compute), and biomedical engineering.',
-          card2Title: 'Research Hub & XR6 Academic',
-          card2Desc: 'Open academic research, Zenodo community integration, and higher education support via XR6 BSA – SASSI.',
-          labelReflection: 'Knowledge & Reflection',
-          linkMore: 'Explore discourse →',
-          reflectionDesc: 'Harmonizing advanced science, modern digital computing, and engineering with the pure worldview of Tawhid, upholding justice and universal compassion.',
-          fAbout: 'About HQ & Governance',
-          fPolicy: 'Privacy Notice (PDPA) & Policies',
-          fContact: 'Contact HQ (hq@ac.xr6labs.com)',
-          copyrightText: '© 2026 XR6 Labs HQ™ & XR6 BSA – SASSI™. All Rights Reserved.',
-          trademarkText: 'XR6 Labs HQ™, the shield emblem, and related marks are trademarks of XR6 Labs HQ.'
-        }
-      };
-
-      var langBtn = document.getElementById('btnLanguage');
-      if (langBtn) {
-        langBtn.addEventListener('click', function() {
-          currentLang = (currentLang === 'BM') ? 'EN' : 'BM';
-          var t = dict[currentLang];
-          langBtn.textContent = t.btnLang;
-          document.getElementById('navAbout').textContent = t.navAbout;
-          document.getElementById('btnLogin').textContent = t.btnLogin;
-          document.getElementById('mNavHome').textContent = t.mNavHome;
-          document.getElementById('mNavAbout').textContent = t.mNavAbout;
-          document.getElementById('clockTitle').textContent = t.clockTitle;
-          document.getElementById('clockSub').textContent = t.clockSub;
-          document.getElementById('heroTitle').textContent = t.heroTitle;
-          document.getElementById('heroDesc').textContent = t.heroDesc;
-          document.getElementById('btnExplore').textContent = t.btnExplore;
-          document.getElementById('btnRegister').textContent = t.btnRegister;
-          document.getElementById('card1Title').textContent = t.card1Title;
-          document.getElementById('card1Desc').textContent = t.card1Desc;
-          document.getElementById('card2Title').textContent = t.card2Title;
-          document.getElementById('card2Desc').textContent = t.card2Desc;
-          document.getElementById('labelReflection').textContent = t.labelReflection;
-          document.getElementById('linkMore').textContent = t.linkMore;
-          document.getElementById('reflectionDesc').textContent = t.reflectionDesc;
-          document.getElementById('fAbout').textContent = t.fAbout;
-          document.getElementById('fPolicy').textContent = t.fPolicy;
-          document.getElementById('fContact').textContent = t.fContact;
-          document.getElementById('copyrightText').textContent = t.copyrightText;
-          document.getElementById('trademarkText').textContent = t.trademarkText;
+      try {
+        const res = await fetch('/api/auth/request-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, turnstileToken: '' })
         });
+        const data = await res.json();
+        if (data.ok) {
+          showStatus('Pautan pengesahan telah dihantar ke ' + email + '. Sila semak peti masuk Zoho Mail anda.');
+        } else {
+          showStatus(data.error || 'Pengesahan gagal. Sila cuba lagi.', true);
+        }
+      } catch (err) {
+        showStatus('Ralat rangkaian: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Hantar Pautan Pengesahan (Magic Link)';
       }
-    })();
+    });
   </script>
 </body>
 </html>
