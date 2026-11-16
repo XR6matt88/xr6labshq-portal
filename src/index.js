@@ -222,10 +222,13 @@ export default {
         return Response.redirect(new URL('/assets/xr6-hq-logo.svg', request.url).toString(), 301);
       }
       if (path === '/robots.txt') {
-        return new Response('User-agent: *\nAllow: /\n', {
-          status: 200,
-          headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
-        });
+        return new Response(
+          'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /dashboard/\nDisallow: /admin/\n\nSitemap: https://xr6labs.com/sitemap.xml\n',
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
+          }
+        );
       }
       
       // 8. Hidangkan Fail Statik (Folder public/)
