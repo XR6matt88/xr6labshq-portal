@@ -5,11 +5,17 @@ import {
   buildSessionCookie,
   clearSessionCookie,
   getCurrentMember,
+  deleteCurrentSession,
   verifyTurnstile,
+  normaliseOrcid,
+  isValidOrcid,
   logAudit
 } from './lib.js';
 import { sendMagicLinkEmail } from './mail.js';
 import { syncAllCommunities } from './sync.js';
+
+const ALLOWED_STATUSES = new Set(['pending', 'active', 'suspended']);
+const ALLOWED_ROLES = new Set(['member', 'secondary_admin', 'admin']);
 
 export default {
   async scheduled(event, env, ctx) {
@@ -50,20 +56,100 @@ export default {
         return json({ ok: true, records: results || [] });
       }
 
-      // 2. API Auth: Minta Pautan Log Masuk (Magic Link)
+      // 2. API Auth: Minta Pautan Log Masuk / Pendaftaran (Magic Link)
       if (path === '/api/auth/request-link' && method === 'POST') {
-        const body = await request.json();
-        const email = (body.email || '').trim().toLowerCase();
-        const turnstileToken = body.turnstileToken || '';
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Format permintaan JSON tidak sah.' }, 400);
+        }
 
-        if (!email || !email.includes('@')) {
+        const email = String(body.email || '').trim().toLowerCase();
+        const turnstileToken = String(body.turnstileToken || '');
+        const displayName = String(body.displayName || '').trim().slice(0, 120);
+        const institution = String(body.institution || '').trim().slice(0, 160);
+        const orcidId = normaliseOrcid(body.orcidId || '');
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           return json({ ok: false, error: 'Alamat e-mel tidak sah.' }, 400);
         }
 
-        const ip = request.headers.get('CF-Connecting-IP');
+        if (orcidId && !isValidOrcid(orcidId)) {
+          return json({ ok: false, error: 'Format ORCID iD tidak sah. Contoh sah: 0000-0002-1825-0097.' }, 400);
+        }
+
+        const ip = request.headers.get('CF-Connecting-IP') || '';
         const humanOk = await verifyTurnstile(turnstileToken, ip, env);
         if (!humanOk) {
           return json({ ok: false, error: 'Pengesahan keselamatan Turnstile gagal.' }, 403);
+        }
+
+        // Had kadar permintaan (Rate Limit): Cooldown 60 saat & maks 3 pautan aktif per e-mel dalam 15 minit
+        const cooldownHit = await env.DB.prepare(`
+          SELECT id FROM auth_tokens
+          WHERE email = ? AND datetime(expires_at) > datetime('now', '+14 minutes')
+          LIMIT 1
+        `).bind(email).first();
+
+        if (cooldownHit) {
+          return json({ ok: false, error: 'Sila tunggu sekurang-kurangnya 60 saat sebelum meminta pautan baharu.' }, 429);
+        }
+
+        const activeCountRow = await env.DB.prepare(`
+          SELECT COUNT(*) AS total FROM auth_tokens
+          WHERE email = ? AND datetime(expires_at) > CURRENT_TIMESTAMP
+        `).bind(email).first();
+
+        if ((activeCountRow?.total || 0) >= 3) {
+          return json({ ok: false, error: 'Terlalu banyak permintaan pautan pengesahan. Sila cuba lagi selepas 15 minit.' }, 429);
+        }
+
+        // Had kadar permintaan per IP menggunakan audit_logs (maks 10 permintaan / 15 minit)
+        const ipHash = await sha256Hex(ip || 'unknown');
+        try {
+          const ipCountRow = await env.DB.prepare(`
+            SELECT COUNT(*) AS total FROM audit_logs
+            WHERE action = 'REQUEST_MAGIC_LINK'
+              AND target_id = ?
+              AND datetime(created_at) > datetime('now', '-15 minutes')
+          `).bind(ipHash).first();
+
+          if ((ipCountRow?.total || 0) >= 10) {
+            return json({ ok: false, error: 'Had permintaan daripada alamat IP anda telah dicapai. Sila cuba sebentar lagi.' }, 429);
+          }
+        } catch {
+          // Abaikan jika jadual audit_logs belum mempunyai lajur created_at
+        }
+
+        // Jika datang daripada borang pendaftaran (/register), simpan maklumat asas ahli baharu yang belum disahkan
+        if (displayName || institution || orcidId) {
+          const existing = await env.DB.prepare(`
+            SELECT id, email_verified, status FROM members WHERE email = ?
+          `).bind(email).first();
+
+          if (!existing) {
+            const fallbackName = displayName || email.split('@')[0];
+            await env.DB.prepare(`
+              INSERT INTO members (id, email, email_verified, display_name, institution, orcid_id, role, status)
+              VALUES (?, ?, 0, ?, ?, ?, 'member', 'pending')
+            `).bind(
+              crypto.randomUUID(),
+              email,
+              fallbackName,
+              institution || null,
+              orcidId || null
+            ).run();
+          } else if (!existing.email_verified && existing.status === 'pending') {
+            await env.DB.prepare(`
+              UPDATE members
+              SET display_name = COALESCE(NULLIF(?, ''), display_name),
+                  institution = COALESCE(NULLIF(?, ''), institution),
+                  orcid_id = COALESCE(NULLIF(?, ''), orcid_id),
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(displayName, institution, orcidId, existing.id).run();
+          }
         }
 
         const rawToken = generateToken(32);
@@ -77,30 +163,36 @@ export default {
 
         const magicUrl = `${url.origin}/api/auth/verify?token=${rawToken}`;
         await sendMagicLinkEmail(env, email, magicUrl);
+        await logAudit(env, null, 'REQUEST_MAGIC_LINK', 'ip', ipHash, { email });
 
         return json({ ok: true, message: 'Pautan pengesahan telah dihantar ke e-mel anda.' });
       }
 
-      // 3. API Auth: Sahkan Pautan Log Masuk (Magic Link Callback)
+      // 3. API Auth: Sahkan Pautan Log Masuk Secara Atomik (Magic Link Callback)
       if (path === '/api/auth/verify' && method === 'GET') {
         const rawToken = url.searchParams.get('token') || '';
         if (!rawToken) return Response.redirect(`${url.origin}/login?error=missing_token`, 302);
 
         const tokenHash = await sha256Hex(rawToken);
         const tokenRow = await env.DB.prepare(`
-          SELECT * FROM auth_tokens
-          WHERE token_hash = ? AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+          UPDATE auth_tokens
+          SET used_at = CURRENT_TIMESTAMP
+          WHERE token_hash = ?
+            AND used_at IS NULL
+            AND datetime(expires_at) > CURRENT_TIMESTAMP
+          RETURNING id, email, purpose
         `).bind(tokenHash).first();
 
         if (!tokenRow) {
           return Response.redirect(`${url.origin}/login?error=invalid_or_expired`, 302);
         }
 
-        await env.DB.prepare(`UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?`)
-          .bind(tokenRow.id).run();
-
         let member = await env.DB.prepare(`SELECT * FROM members WHERE email = ?`)
           .bind(tokenRow.email).first();
+
+        if (member && member.status === 'suspended') {
+          return Response.redirect(`${url.origin}/login?error=account_suspended`, 302);
+        }
 
         if (!member) {
           const newId = crypto.randomUUID();
@@ -111,7 +203,7 @@ export default {
           `).bind(newId, tokenRow.email, defaultName).run();
           member = await env.DB.prepare(`SELECT * FROM members WHERE id = ?`).bind(newId).first();
         } else if (!member.email_verified) {
-          await env.DB.prepare(`UPDATE members SET email_verified = 1 WHERE id = ?`)
+          await env.DB.prepare(`UPDATE members SET email_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
             .bind(member.id).run();
         }
 
@@ -143,8 +235,9 @@ export default {
         });
       }
 
-      // 4. API Auth: Log Keluar
+      // 4. API Auth: Log Keluar (Padam Sesi D1 + Cookie)
       if (path === '/api/auth/logout' && method === 'POST') {
+        await deleteCurrentSession(request, env);
         return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
       }
 
@@ -162,6 +255,57 @@ export default {
         `).bind(member.id).all();
 
         return json({ ok: true, member, publications: pubs || [] });
+      }
+
+      // 5b. API Kemas Kini Profil Ahli (/api/me/profile)
+      if (path === '/api/me/profile' && method === 'POST') {
+        const member = await getCurrentMember(request, env);
+        if (!member) return json({ ok: false, error: 'Sesi tamat. Sila log masuk semula.' }, 401);
+
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Format JSON tidak sah.' }, 400);
+        }
+
+        const displayName = String(body.displayName || '').trim().slice(0, 120);
+        const institution = String(body.institution || '').trim().slice(0, 160);
+        const researchField = String(body.researchField || '').trim().slice(0, 160);
+        const orcidId = normaliseOrcid(body.orcidId || '');
+
+        if (!displayName) {
+          return json({ ok: false, error: 'Nama paparan diperlukan.' }, 400);
+        }
+        if (orcidId && !isValidOrcid(orcidId)) {
+          return json({ ok: false, error: 'Format ORCID iD tidak sah. Gunakan format seperti 0000-0002-1825-0097.' }, 400);
+        }
+
+        const orcidChanged = (orcidId || null) !== (member.orcid_id || null);
+
+        await env.DB.prepare(`
+          UPDATE members
+          SET display_name = ?,
+              institution = ?,
+              research_field = ?,
+              orcid_id = ?,
+              orcid_verified = CASE WHEN ? THEN 0 ELSE orcid_verified END,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(
+          displayName,
+          institution || null,
+          researchField || null,
+          orcidId || null,
+          orcidChanged ? 1 : 0,
+          member.id
+        ).run();
+
+        await logAudit(env, member.id, 'UPDATE_PROFILE', 'member', member.id, {
+          orcidChanged
+        });
+
+        return json({ ok: true, message: 'Profil & ORCID iD berjaya disimpan.' });
       }
 
       // 6. API Admin: Segerakkan Zenodo Sekarang
@@ -196,41 +340,46 @@ export default {
           return json({ ok: false, error: 'Akses pentadbir diperlukan.' }, 403);
         }
 
-        const body = await request.json();
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Format JSON tidak sah.' }, 400);
+        }
+
         const { memberId, status, role, displayName, email } = body;
         if (!memberId) return json({ ok: false, error: 'memberId diperlukan.' }, 400);
 
-        if (status) {
+        if (status !== undefined) {
+          if (!ALLOWED_STATUSES.has(status)) {
+            return json({ ok: false, error: 'Nilai status tidak sah.' }, 400);
+          }
           await env.DB.prepare(`UPDATE members SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
             .bind(status, memberId).run();
         }
-        if (role && actor.role === 'admin') {
+
+        if (role !== undefined && actor.role === 'admin') {
+          if (!ALLOWED_ROLES.has(role)) {
+            return json({ ok: false, error: 'Nilai peranan tidak sah.' }, 400);
+          }
           await env.DB.prepare(`UPDATE members SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
             .bind(role, memberId).run();
         }
+
         if (displayName && email && actor.role === 'admin') {
           await env.DB.prepare(`UPDATE members SET display_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-            .bind(displayName.trim(), email.trim().toLowerCase(), memberId).run();
+            .bind(String(displayName).trim().slice(0, 120), String(email).trim().toLowerCase(), memberId).run();
         }
 
         await logAudit(env, actor.id, 'UPDATE_MEMBER', 'member', memberId, { status, role });
         return json({ ok: true });
       }
 
-      // 7b. Favicon & Robots.txt (Supaya Googlebot & Chrome terima ikon/arahan sah, bukan teks lalai)
+      // 7b. Favicon redirect (robots.txt & sitemap.xml dihidangkan terus dari public/)
       if (path === '/favicon.ico') {
         return Response.redirect(new URL('/assets/xr6-hq-logo.svg', request.url).toString(), 301);
       }
-      if (path === '/robots.txt') {
-        return new Response(
-          'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /dashboard/\nDisallow: /admin/\n\nSitemap: https://xr6labs.com/sitemap.xml\n',
-          {
-            status: 200,
-            headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
-          }
-        );
-      }
-      
+
       // 8. Hidangkan Fail Statik (Folder public/)
       if (env.ASSETS) {
         return await env.ASSETS.fetch(request);
@@ -238,7 +387,8 @@ export default {
 
       return new Response('XR6 Labs HQ Worker Active', { status: 200 });
     } catch (err) {
-      return json({ ok: false, error: err.message }, 500);
+      console.error('Worker error:', err);
+      return json({ ok: false, error: 'Ralat pelayan dalaman. Sila cuba sebentar lagi.' }, 500);
     }
   }
 };
