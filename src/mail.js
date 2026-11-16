@@ -34,7 +34,7 @@ export async function sendMagicLinkEmail(env, toEmail, magicUrl) {
         </div>
         <p style="font-size: 12px; color: #8FA39E; line-height: 1.5;">
           Jika anda tidak meminta pautan ini, sila abaikan e-mel ini.<br>
-          XR6 Labs HQ • 26A, Kg. Banggol Petai, 06700 Pendang, Kedah Darul Aman, Malaysia.
+          XR6 Labs HQ&trade; &bull; Pendang, Kedah Darul Aman, Malaysia (Virtual).
         </p>
       </div>
     `
