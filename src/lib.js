@@ -33,7 +33,11 @@ export function parseCookies(cookieHeader) {
     if (idx > -1) {
       const key = pair.slice(0, idx).trim();
       const val = pair.slice(idx + 1).trim();
-      cookies[key] = decodeURIComponent(val);
+      try {
+        cookies[key] = decodeURIComponent(val);
+      } catch {
+        cookies[key] = val;
+      }
     }
   });
   return cookies;
@@ -56,14 +60,30 @@ export async function getCurrentMember(request, env) {
   const row = await env.DB.prepare(`
     SELECT m.* FROM sessions s
     JOIN members m ON s.member_id = m.id
-    WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP
+    WHERE s.token_hash = ?
+      AND datetime(s.expires_at) > CURRENT_TIMESTAMP
+      AND m.status != 'suspended'
   `).bind(tokenHash).first();
 
   return row || null;
 }
 
+export async function deleteCurrentSession(request, env) {
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  const sessionToken = cookies['xr6_session'];
+  if (!sessionToken || !env.DB) return;
+
+  const tokenHash = await sha256Hex(sessionToken);
+  await env.DB.prepare(`DELETE FROM sessions WHERE token_hash = ?`)
+    .bind(tokenHash)
+    .run();
+}
+
 export async function verifyTurnstile(token, ip, env) {
-  if (!env.TURNSTILE_SECRET_KEY) return true;
+  if (!env.TURNSTILE_SECRET_KEY) {
+    console.error('TURNSTILE_SECRET_KEY belum ditetapkan dalam persekitaran produksi.');
+    return false;
+  }
   if (!token) return false;
 
   const formData = new FormData();
@@ -71,12 +91,29 @@ export async function verifyTurnstile(token, ip, env) {
   formData.append('response', token);
   if (ip) formData.append('remoteip', ip);
 
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body: formData
-  });
-  const outcome = await res.json();
-  return Boolean(outcome.success);
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) return false;
+    const outcome = await res.json();
+    return Boolean(outcome.success);
+  } catch {
+    return false;
+  }
+}
+
+export function normaliseOrcid(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^https?:\/\/orcid\.org\//i, '')
+    .toUpperCase();
+}
+
+export function isValidOrcid(value) {
+  if (!value) return true;
+  return /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/.test(value);
 }
 
 export async function logAudit(env, actorId, action, targetType = null, targetId = null, details = {}) {
