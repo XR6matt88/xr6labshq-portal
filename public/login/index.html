@@ -16,7 +16,7 @@
         <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/50 text-[#D7B46A] font-serif text-sm font-bold">XR6</span>
         <span>XR6 LABS HQ</span>
       </a>
-      <a href="/" class="text-xs text-[#39E58C] hover:underline">← Kembali ke Utama</a>
+      <a href="/" class="text-xs text-[#39E58C] hover:underline">&larr; Kembali ke Utama</a>
     </div>
   </header>
 
@@ -42,6 +42,7 @@
           />
         </div>
 
+        <!-- SEMAK SITEKEY DI CLOUDFLARE TURNSTILE DASHBOARD (samakan dengan /register) -->
         <div class="cf-turnstile" data-sitekey="0x4AAAAAAGAHIchVAeqHGXeU" data-theme="dark"></div>
 
         <button
@@ -72,7 +73,7 @@
       </div>
     </div>
   </footer>
-  
+
   <script>
     const params = new URLSearchParams(window.location.search);
     const statusBox = document.getElementById('statusBox');
@@ -89,6 +90,8 @@
       showStatus('Pautan pengesahan tidak sah atau telah tamat tempoh (15 minit). Sila minta pautan baharu.', true);
     } else if (params.get('error') === 'missing_token') {
       showStatus('Token pengesahan tiada. Sila cuba log masuk semula.', true);
+    } else if (params.get('error') === 'account_suspended') {
+      showStatus('Akaun anda telah digantung buat sementara waktu. Sila hubungi Pentadbir HQ di hq@ac.xr6labs.com.', true);
     }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -112,6 +115,7 @@
           showStatus('Pautan pengesahan telah dihantar ke ' + email + '. Sila semak peti masuk (Inbox / Spam) anda dalam masa 15 minit.');
         } else {
           showStatus(data.error || 'Gagal menghantar pautan pengesahan.', true);
+          if (window.turnstile) window.turnstile.reset();
         }
       } catch (err) {
         showStatus('Ralat rangkaian: ' + err.message, true);
