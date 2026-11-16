@@ -217,6 +217,17 @@ export default {
         return json({ ok: true });
       }
 
+      // 7b. Favicon & Robots.txt (Supaya Googlebot & Chrome terima ikon/arahan sah, bukan teks lalai)
+      if (path === '/favicon.ico') {
+        return Response.redirect(new URL('/assets/xr6-hq-logo.svg', request.url).toString(), 301);
+      }
+      if (path === '/robots.txt') {
+        return new Response('User-agent: *\nAllow: /\n', {
+          status: 200,
+          headers: { 'Content-Type': 'text/plain; charset=UTF-8' }
+        });
+      }
+      
       // 8. Hidangkan Fail Statik (Folder public/)
       if (env.ASSETS) {
         return await env.ASSETS.fetch(request);
