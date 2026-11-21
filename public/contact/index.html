@@ -20,14 +20,14 @@
         <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px] ml-0.5">™</sup></span>
       </a>
       <nav class="hidden lg:flex items-center gap-4 text-xs font-medium text-gray-300">
-        <a href="/" class="hover:text-[#39E58C] transition">Utama</a>
-        <a href="/about" class="hover:text-[#39E58C] transition">Tentang HQ</a>
+        <a href="/" data-bm="Utama" data-en="Home" class="hover:text-[#39E58C] transition">Utama</a>
+        <a href="/about" data-bm="Tentang HQ" data-en="About HQ" class="hover:text-[#39E58C] transition">Tentang HQ</a>
         <a href="/research-engineering" class="hover:text-[#39E58C] transition">Research &amp; Engineering</a>
         <a href="/research-hub" class="hover:text-[#39E58C] transition">Research Hub</a>
         <a href="/library" class="hover:text-[#39E58C] transition">Library</a>
         <a href="/xr6-academic/sassi" class="hover:text-[#39E58C] transition">XR6 Academic</a>
         <a href="/compounds/XR6-CMP-001" class="hover:text-[#39E58C] transition">Compounds</a>
-        <a href="/policies" class="hover:text-[#39E58C] transition">Polisi</a>
+        <a href="/policies" data-bm="Polisi" data-en="Policies" class="hover:text-[#39E58C] transition">Polisi</a>
         <a href="/contact" class="text-[#39E58C] font-bold">Contact</a>
       </nav>
       <div class="flex items-center gap-2 shrink-0">
@@ -41,14 +41,14 @@
     </div>
     <!-- Bar Tab Pilihan Halaman untuk Telefon & Tablet (Sentiasa Kekal di Atas) -->
     <div class="lg:hidden border-t border-[#1A3831]/70 bg-[#060E0C]/95 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs text-gray-300 whitespace-nowrap">
-      <a href="/" class="hover:text-[#39E58C]">Utama</a>
-      <a href="/about" class="hover:text-[#39E58C]">Tentang HQ</a>
+      <a href="/" data-bm="Utama" data-en="Home" class="hover:text-[#39E58C]">Utama</a>
+      <a href="/about" data-bm="Tentang HQ" data-en="About HQ" class="hover:text-[#39E58C]">Tentang HQ</a>
       <a href="/research-engineering" class="hover:text-[#39E58C]">Research &amp; Engineering</a>
       <a href="/research-hub" class="hover:text-[#39E58C]">Research Hub</a>
       <a href="/library" class="hover:text-[#39E58C]">Library</a>
       <a href="/xr6-academic/sassi" class="hover:text-[#39E58C]">XR6 Academic</a>
       <a href="/compounds/XR6-CMP-001" class="hover:text-[#39E58C]">Compounds</a>
-      <a href="/policies" class="hover:text-[#39E58C]">Polisi</a>
+      <a href="/policies" data-bm="Polisi" data-en="Policies" class="hover:text-[#39E58C]">Polisi</a>
       <a href="/contact" class="text-[#39E58C] font-bold">Contact</a>
     </div>
   </header>
@@ -63,13 +63,13 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="rounded-xl border border-[#1A3831] bg-[#0E1F1B] p-6 space-y-5">
         <div>
-          <p class="text-[11px] uppercase tracking-wider text-gray-400">Nama Organisasi</p>
+          <p id="labelOrg" class="text-[11px] uppercase tracking-wider text-gray-400">Nama Organisasi</p>
           <h2 class="text-base sm:text-lg font-bold text-[#39E58C] mt-1">XR6 Labs HQ – Research &amp; Engineering</h2>
         </div>
 
         <div class="border-t border-[#1A3831] pt-4 space-y-3">
           <div>
-            <p class="text-[11px] uppercase tracking-wider text-gray-400">Penyelidik Utama</p>
+            <p id="labelPi" class="text-[11px] uppercase tracking-wider text-gray-400">Penyelidik Utama</p>
             <p class="text-sm sm:text-base font-semibold text-white mt-1">Dr. Mohd Rahmat Nasyaa Bin Zulkifli, MD, PhD</p>
           </div>
           <dl class="grid grid-cols-3 gap-2.5 text-xs">
@@ -82,21 +82,21 @@
               <dd class="font-mono font-bold text-[#37DDF4] mt-0.5 tabular-nums">64722</dd>
             </div>
             <div class="rounded-lg border border-[#1A3831] bg-[#081210] p-2.5">
-              <dt class="text-[10px] uppercase tracking-wider text-gray-400">NAPB ePID</dt>
+              <dt class="text-[10px] uppercase tracking-wider text-gray-400">NABP ePID</dt>
               <dd class="font-mono font-bold text-[#37DDF4] mt-0.5 tabular-nums">2039475</dd>
             </div>
           </dl>
         </div>
 
         <div class="border-t border-[#1A3831] pt-4">
-          <p class="text-[11px] uppercase tracking-wider text-gray-400">Lokasi / Alamat</p>
+          <p id="labelLoc" class="text-[11px] uppercase tracking-wider text-gray-400">Lokasi / Alamat</p>
           <p class="text-sm text-gray-200 mt-1">Pendang, Kedah Darul Aman, Malaysia</p>
         </div>
       </section>
 
       <section class="rounded-xl border border-[#1A3831] bg-[#0E1F1B] p-6 space-y-5">
         <div>
-          <p class="text-[11px] uppercase tracking-wider text-gray-400">E-mel Rasmi</p>
+          <p id="labelEmail" class="text-[11px] uppercase tracking-wider text-gray-400">E-mel Rasmi</p>
           <div class="mt-2.5 space-y-2.5">
             <a href="mailto:matt@xr6labs.com" class="block rounded-lg border border-[#1A3831] bg-[#081210] px-4 py-3 text-sm font-mono text-[#39E58C] hover:border-[#39E58C] transition">
               matt@xr6labs.com
@@ -108,9 +108,9 @@
         </div>
 
         <div class="border-t border-[#1A3831] pt-4 space-y-2.5">
-          <p id="supportLabel" class="text-[11px] uppercase tracking-wider text-[#D7B46A]">Pasukan Sokongan / Support Team</p>
-          <p id="supportNote" class="text-xs sm:text-sm text-gray-200 leading-relaxed">
-            * Untuk sebarang pertanyaan dan maklumat lanjut sila hubungi support team kami di
+          <p id="supportLabel" class="text-[11px] uppercase tracking-wider text-[#D7B46A]">Pasukan Sokongan</p>
+          <p class="text-xs sm:text-sm text-gray-200 leading-relaxed">
+            <span id="supportPrefix">* Untuk sebarang pertanyaan dan maklumat lanjut sila hubungi support team kami di</span>
             <a href="mailto:support@xr6labs.com" class="font-mono text-[#D7B46A] hover:underline">support@xr6labs.com</a>
             /
             <a href="mailto:hq@ac.xr6labs.com" class="font-mono text-[#D7B46A] hover:underline">hq@ac.xr6labs.com</a>
@@ -124,9 +124,9 @@
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
       <p>&copy; 2026 <strong class="text-white">XR6 Labs HQ&trade;</strong> &ndash; Research &amp; Engineering &bull; Pendang, Kedah Darul Aman, Malaysia</p>
       <div class="flex flex-wrap items-center justify-center gap-4 text-[11px]">
-        <a href="/" class="hover:text-[#39E58C] transition">Utama</a>
-        <a href="/about" class="hover:text-[#39E58C] transition">Tentang HQ</a>
-        <a href="/policies" class="hover:text-[#39E58C] transition">Privasi (PDPA) &amp; Polisi</a>
+        <a href="/" data-bm="Utama" data-en="Home" class="hover:text-[#39E58C] transition">Utama</a>
+        <a href="/about" data-bm="Tentang HQ" data-en="About HQ" class="hover:text-[#39E58C] transition">Tentang HQ</a>
+        <a href="/policies" data-bm="Privasi (PDPA) &amp; Polisi" data-en="Privacy (PDPA) &amp; Policies" class="hover:text-[#39E58C] transition">Privasi (PDPA) &amp; Polisi</a>
         <a href="/contact" class="text-[#39E58C] hover:underline">Contact</a>
       </div>
     </div>
@@ -135,34 +135,87 @@
   <script>
     (function () {
       var lang = 'BM';
+      var currentRole = null;
       var dict = {
         BM: {
+          htmlLang: 'ms',
           btnLang: 'BM | EN',
-          btnLogin: 'Log masuk',
+          btnLoginGuest: 'Log masuk',
           pageKicker: 'Saluran Komunikasi Rasmi',
           pageTitle: 'Contact – XR6 Labs HQ',
           pageSubtitle: 'Maklumat rasmi organisasi, penyelidik utama, lokasi operasi, dan pasukan sokongan.',
-          supportLabel: 'Pasukan Sokongan / Support Team'
+          labelOrg: 'Nama Organisasi',
+          labelPi: 'Penyelidik Utama',
+          labelLoc: 'Lokasi / Alamat',
+          labelEmail: 'E-mel Rasmi',
+          supportLabel: 'Pasukan Sokongan',
+          supportPrefix: '* Untuk sebarang pertanyaan dan maklumat lanjut sila hubungi support team kami di'
         },
         EN: {
+          htmlLang: 'en',
           btnLang: 'EN | BM',
-          btnLogin: 'Sign In',
+          btnLoginGuest: 'Sign In',
           pageKicker: 'Official Communication Channels',
           pageTitle: 'Contact – XR6 Labs HQ',
-          pageSubtitle: 'Official organization details, principal investigator credentials, location, and support team.',
-          supportLabel: 'Support Team'
+          pageSubtitle: 'Official organization details, principal investigator credentials, operating location, and support team.',
+          labelOrg: 'Organization Name',
+          labelPi: 'Principal Investigator',
+          labelLoc: 'Location / Address',
+          labelEmail: 'Official Email',
+          supportLabel: 'Support Team',
+          supportPrefix: '* For any inquiries and further information, please contact our support team at'
         }
       };
-      document.getElementById('btnLanguage').addEventListener('click', function () {
-        lang = lang === 'BM' ? 'EN' : 'BM';
+
+      function applyLanguage() {
         var t = dict[lang];
-        this.textContent = t.btnLang;
-        document.getElementById('btnLogin').textContent = t.btnLogin;
+        document.documentElement.lang = t.htmlLang;
+        document.getElementById('btnLanguage').textContent = t.btnLang;
         document.getElementById('pageKicker').textContent = t.pageKicker;
         document.getElementById('pageTitle').textContent = t.pageTitle;
         document.getElementById('pageSubtitle').textContent = t.pageSubtitle;
+        document.getElementById('labelOrg').textContent = t.labelOrg;
+        document.getElementById('labelPi').textContent = t.labelPi;
+        document.getElementById('labelLoc').textContent = t.labelLoc;
+        document.getElementById('labelEmail').textContent = t.labelEmail;
         document.getElementById('supportLabel').textContent = t.supportLabel;
+        document.getElementById('supportPrefix').textContent = t.supportPrefix;
+
+        document.querySelectorAll('[data-bm][data-en]').forEach(function (el) {
+          el.textContent = lang === 'BM' ? el.getAttribute('data-bm') : el.getAttribute('data-en');
+        });
+
+        var loginBtn = document.getElementById('btnLogin');
+        if (currentRole === 'member') {
+          loginBtn.textContent = 'Dashboard';
+        } else if (currentRole === 'admin' || currentRole === 'secondary_admin') {
+          loginBtn.textContent = 'Admin HQ';
+        } else {
+          loginBtn.textContent = t.btnLoginGuest;
+        }
+      }
+
+      document.getElementById('btnLanguage').addEventListener('click', function () {
+        lang = lang === 'BM' ? 'EN' : 'BM';
+        applyLanguage();
       });
+
+      (async function initSession() {
+        var loginBtn = document.getElementById('btnLogin');
+        try {
+          var res = await fetch('/api/me');
+          if (!res.ok) return;
+          var data = await res.json();
+          if (!data.ok || !data.member) return;
+          currentRole = data.member.role;
+          if (currentRole === 'member') {
+            loginBtn.href = '/dashboard';
+          } else {
+            loginBtn.href = '/admin';
+          }
+          applyLanguage();
+        } catch (e) {}
+      })();
     })();
   </script>
 </body>
