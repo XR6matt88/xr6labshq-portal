@@ -1,0 +1,26 @@
+# XR6 Labs HQ™ – Research & Engineering Institute
+
+> XR6 Labs HQ™ is an independent research and engineering institute based in Pendang, Kedah Darul Aman, Malaysia, focusing on decentralized AI, post-quantum cryptography (PQC), Zero-Knowledge Proof-of-Execution (ZK-PoE), Eco-Compute, cheminformatics, and the XR6 BSA – SASSI™ academic research programme.
+
+## Core Research & Institutional Pages
+
+- [XR6 Labs HQ™ Home](https://xr6labs.com/): Official overview of XR6 Labs HQ™ research infrastructure, initiatives, and institutional governance.
+- [About HQ & Governance](https://xr6labs.com/about): Institutional background, governance structure, DORA commitment, and registry profile.
+- [Research & Engineering](https://xr6labs.com/research-engineering): Technical programmes in decentralized AI, post-quantum cryptography (PQC), ZK-PoE, and Eco-Compute systems.
+- [Research Hub](https://xr6labs.com/research-hub): Active engineering tracks, collaborative workflows, and research infrastructure.
+- [Research Library](https://xr6labs.com/library): Curated publications, technical preprints, and Zenodo-synchronized open science records.
+
+## Academic Programme & Open Repositories
+
+- [XR6 Academic Programme (XR6 BSA – SASSI™)](https://xr6labs.com/xr6-academic/sassi): Academic programme documentation, research outputs, and community publications.
+- [XR6-CMP-001 Chemical Repository](https://xr6labs.com/compounds/XR6-CMP-001): Open chemical compound benchmark record (`XR6 Benchmark Lead-01`) and cheminformatics metadata.
+
+## Policies & Official Contact
+
+- [Policies, PDPA Privacy Notice & Open Science Policy](https://xr6labs.com/policies): Personal Data Protection Act (PDPA) notice, open science policy, and chemical repository governance.
+- [Contact & Official Registry](https://xr6labs.com/contact): Official correspondence channels (`hq@ac.xr6labs.com`, `support@xr6labs.com`) and institutional identifiers (`NABP ePID: 2039475`).
+
+## Crawling & Discovery Notes
+
+- Primary XML Sitemap: [https://xr6labs.com/sitemap.xml](https://xr6labs.com/sitemap.xml)
+- Public read-only pages above are open for indexing and citation; authenticated portal routes (`/api/`, `/dashboard/`, `/admin/`) are disallowed per `robots.txt`.
