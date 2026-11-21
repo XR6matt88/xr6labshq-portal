@@ -29,6 +29,7 @@
         <a href="/xr6-academic/sassi" class="text-[#39E58C] font-bold">XR6 Academic</a>
         <a href="/compounds/XR6-CMP-001" class="hover:text-[#39E58C] transition">Compounds</a>
         <a href="/policies" class="hover:text-[#39E58C] transition">Polisi</a>
+        <a href="/contact" class="hover:text-[#39E58C] transition">Contact</a>
       </nav>
 
       <div class="flex items-center gap-2 shrink-0">
@@ -51,6 +52,7 @@
       <a href="/xr6-academic/sassi" class="text-[#39E58C] font-bold">XR6 Academic</a>
       <a href="/compounds/XR6-CMP-001" class="hover:text-[#39E58C]">Compounds</a>
       <a href="/policies" class="hover:text-[#39E58C]">Polisi</a>
+      <a href="/contact" class="hover:text-[#39E58C]">Contact</a>
     </div>
   </header>
 
@@ -292,7 +294,6 @@
           if (!res.ok) return;
           var data = await res.json();
           if (!data.ok || !data.member) return;
-
           currentRole = data.member.role;
           if (currentRole === 'member') {
             myBtn.href = 'https://zenodo.org/me/communities';
