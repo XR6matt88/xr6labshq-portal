@@ -54,13 +54,13 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="sm:col-span-2">
             <label class="block text-xs text-gray-300 mb-1">Tajuk Aktiviti / Hebahan *</label>
-            <input type="text" name="title" required placeholder="Contoh: Bengkel Eco-Compute &amp; Ringkasan Audio Penyelidikan"
+            <input type="text" name="title" id="titleInput" required placeholder="Contoh: Bengkel Eco-Compute &amp; Ringkasan Audio Penyelidikan"
               class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]" />
           </div>
           <div>
             <label class="block text-xs text-gray-300 mb-1">Kategori &amp; Tarikh</label>
             <div class="flex gap-2">
-              <select name="category" class="w-1/2 px-2.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs focus:outline-none focus:border-[#39E58C]">
+              <select name="category" id="categoryInput" class="w-1/2 px-2.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs focus:outline-none focus:border-[#39E58C]">
                 <option value="Aktiviti">Aktiviti</option>
                 <option value="Pengumuman">Pengumuman</option>
                 <option value="Audio Overview">Audio Overview</option>
@@ -74,7 +74,7 @@
 
         <div>
           <label class="block text-xs text-gray-300 mb-1">Keterangan / Ringkasan Aktiviti</label>
-          <textarea name="description" rows="3" placeholder="Masukkan butiran program, pautan penyertaan atau sinopsis audio..."
+          <textarea name="description" id="descriptionInput" rows="3" placeholder="Masukkan butiran program, pautan penyertaan atau sinopsis audio..."
             class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]"></textarea>
         </div>
 
@@ -83,7 +83,7 @@
             Muat Naik Fail Visual, Dokumen atau Audio Overview daripada Notebook (Pilihan)
           </label>
           <p class="text-[11px] text-gray-400">
-            Menyokong fail Audio (MP3, WAV, M4A), Visual (JPG, PNG, WEBP, MP4), dan Dokumen (PDF, DOCX, PPTX, ZIP) sehingga <strong>50 MB</strong>.
+            Menyokong fail Audio (MP3, WAV, M4A), Visual (JPG, PNG, WEBP, MP4), dan Dokumen (PDF, DOCX, PPTX, ZIP) sehingga <strong>50 MB</strong>. Tip Android: Jika pilih fail daripada Google Drive gagal dibaca pelayar, simpan fail ke folder <em>Downloads</em> peranti dahulu.
           </p>
           <input type="file" id="mediaFileInput" name="media_file" accept="audio/*,image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,.zip"
             class="block w-full text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#FF6A00] file:text-[#081210] hover:file:opacity-90 cursor-pointer pt-1" />
@@ -174,7 +174,6 @@
       }
     }
 
-    // 1. Semak sama ada pengguna ialah Super Admin ('admin') atau Second Admin ('secondary_admin')
     async function checkAdminAccess() {
       try {
         const res = await fetch('/api/me');
@@ -192,7 +191,6 @@
       } catch (e) {}
     }
 
-    // 2. Muatkan semua pengumuman & aktiviti
     async function loadAnnouncements() {
       const feed = document.getElementById('announcementsFeed');
       try {
@@ -272,7 +270,47 @@
       }
     }
 
-    // 3. Proses Muat Naik oleh Admin / Second Admin
+    function uploadMediaWithProgress(blob, fileName, fileMime, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', '/api/admin/announcements/media', true);
+        xhr.withCredentials = true;
+        xhr.timeout = 180000;
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.setRequestHeader('X-Media-Name', encodeURIComponent(fileName || 'lampiran'));
+        xhr.setRequestHeader('X-Media-Mime', fileMime || 'application/octet-stream');
+
+        xhr.upload.onprogress = function(ev) {
+          if (ev.lengthComputable && typeof onProgress === 'function') {
+            onProgress(Math.round((ev.loaded / ev.total) * 100));
+          }
+        };
+
+        xhr.onload = function() {
+          try {
+            const parsed = JSON.parse(xhr.responseText || '{}');
+            if (xhr.status >= 200 && xhr.status < 300 && parsed.ok) {
+              resolve(parsed);
+            } else {
+              reject(new Error(parsed.error || `Gagal muat naik ke R2 (HTTP ${xhr.status}).`));
+            }
+          } catch {
+            reject(new Error(`Respons bukan JSON daripada pelayan (HTTP ${xhr.status}).`));
+          }
+        };
+
+        xhr.onerror = function() {
+          reject(new Error('Sambungan terputus semasa menghantar fail ke Cloudflare R2. Pastikan fail disimpan di storan telefon (bukan fail maya Google Drive) dan rangkaian stabil.'));
+        };
+
+        xhr.ontimeout = function() {
+          reject(new Error('Masa muat naik tamat (timeout). Sila cuba fail lebih kecil atau sambungan Wi-Fi.'));
+        };
+
+        xhr.send(blob);
+      });
+    }
+
     document.getElementById('announcementForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('publishBtn');
@@ -286,15 +324,52 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Sedang memuat naik...';
       document.getElementById('uploadStatusBox').classList.add('hidden');
 
       try {
-        const formData = new FormData(this);
+        let uploadedMeta = null;
+
+        if (chosenFile && chosenFile.size > 0) {
+          btn.textContent = 'Membaca fail...';
+          let buffer;
+          try {
+            buffer = await chosenFile.arrayBuffer();
+          } catch (readErr) {
+            showUploadStatus('Fail daripada Google Drive gagal dibaca terus oleh pelayar (' + (readErr?.message || 'NotReadableError') + '). Sila muat turun fail itu ke folder Downloads telefon dahulu, kemudian pilih semula.', true);
+            return;
+          }
+
+          const cleanBlob = new Blob([buffer], { type: 'application/octet-stream' });
+          btn.textContent = 'Memuat naik 0%...';
+          uploadedMeta = await uploadMediaWithProgress(
+            cleanBlob,
+            chosenFile.name,
+            chosenFile.type || 'application/octet-stream',
+            (pct) => { btn.textContent = `Memuat naik ${pct}%...`; }
+          );
+        }
+
+        btn.textContent = 'Menyiarkan...';
+        const payload = {
+          title: document.getElementById('titleInput').value.trim(),
+          category: document.getElementById('categoryInput').value,
+          activity_date: document.getElementById('activityDateInput').value,
+          description: document.getElementById('descriptionInput').value.trim()
+        };
+
+        if (uploadedMeta) {
+          payload.media_key = uploadedMeta.mediaKey;
+          payload.media_filename = uploadedMeta.mediaFilename;
+          payload.media_mime = uploadedMeta.mediaMime;
+          payload.media_type = uploadedMeta.mediaType;
+        }
+
         const res = await fetch('/api/admin/announcements', {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
+
         const rawText = await res.text();
         let data = null;
         try {
@@ -308,20 +383,19 @@
           this.reset();
           document.getElementById('activityDateInput').valueAsDate = new Date();
           document.getElementById('selectedFileInfo').classList.add('hidden');
-          showUploadStatus('Berjaya disiarkan ke ruangan aktiviti!', false);
+          showUploadStatus('Berjaya disiarkan ke ruangan aktiviti bersama lampiran!', false);
           await loadAnnouncements();
         } else {
-          showUploadStatus((data && data.error) ? data.error : `Gagal memuat naik (HTTP ${res.status}).`, true);
+          showUploadStatus((data && data.error) ? data.error : `Gagal menyiarkan (HTTP ${res.status}).`, true);
         }
       } catch (err) {
-        showUploadStatus('Ralat sambungan pelayar: ' + (err && err.message ? err.message : 'Gagal menghubungi pelayan.'), true);
+        showUploadStatus(err && err.message ? err.message : 'Ralat sambungan pelayar.', true);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Siarkan Sekarang';
       }
     });
 
-    // 4. Fungsi Padam Aktiviti Lama yang Tidak Aktif
     async function deleteAnnouncement(id) {
       if (!confirm('Adakah anda pasti mahu memadam aktiviti lama ini secara kekal?')) return;
       try {
