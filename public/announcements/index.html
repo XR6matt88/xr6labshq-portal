@@ -17,10 +17,11 @@
         <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px]">™</sup></span>
       </a>
 
-      <nav class="flex items-center gap-4 text-xs">
+      <nav class="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
         <a href="/" class="text-gray-300 hover:text-[#39E58C]">Utama</a>
         <a href="/library" class="text-gray-300 hover:text-[#39E58C]">Library</a>
         <a href="/announcements" class="text-[#39E58C] font-bold">Aktiviti &amp; Hebahan</a>
+        <a href="/contact" class="text-gray-300 hover:text-[#39E58C]">Contact</a>
         <a href="/login" id="authLink" class="px-3 py-1.5 rounded-lg bg-[#39E58C] text-[#081210] font-semibold">Log masuk</a>
       </nav>
     </div>
@@ -43,14 +44,17 @@
           <span class="px-2.5 py-0.5 rounded bg-[#39E58C]/20 text-[#39E58C] text-[11px] font-bold uppercase">Mod Pentadbir Sahaja</span>
           <h2 class="text-lg font-bold text-white mt-1">Siarkan Pengumuman / Aktiviti Baharu</h2>
         </div>
-        <span id="adminRoleBadge" class="text-xs text-[#D7B46A] font-mono"></span>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span id="storageBadge" class="px-2.5 py-1 rounded bg-[#081210] border border-[#1A3831] text-gray-300 font-mono">Menyemak storan...</span>
+          <span id="adminRoleBadge" class="text-[#D7B46A] font-mono"></span>
+        </div>
       </div>
 
       <form id="announcementForm" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="sm:col-span-2">
             <label class="block text-xs text-gray-300 mb-1">Tajuk Aktiviti / Hebahan *</label>
-            <input type="text" name="title" required placeholder="Contoh: Bengkel Eco-Compute & Ringkasan Audio Penyelidikan"
+            <input type="text" name="title" required placeholder="Contoh: Bengkel Eco-Compute &amp; Ringkasan Audio Penyelidikan"
               class="w-full px-3.5 py-2.5 rounded-lg bg-[#081210] border border-[#1A3831] text-white text-xs sm:text-sm focus:outline-none focus:border-[#39E58C]" />
           </div>
           <div>
@@ -79,16 +83,18 @@
             Muat Naik Fail Visual, Dokumen atau Audio Overview daripada Notebook (Pilihan)
           </label>
           <p class="text-[11px] text-gray-400">
-            Menyokong fail Audio (MP3, WAV, M4A daripada Gemini Notebook Audio Overview), Visual (JPG, PNG, WEBP, MP4), dan Dokumen (PDF).
+            Menyokong fail Audio (MP3, WAV, M4A), Visual (JPG, PNG, WEBP, MP4), dan Dokumen (PDF, DOCX, PPTX, ZIP) sehingga <strong>50 MB</strong>.
           </p>
-          <input type="file" name="media_file" accept="audio/*,image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,.zip"
+          <input type="file" id="mediaFileInput" name="media_file" accept="audio/*,image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,.zip"
             class="block w-full text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#FF6A00] file:text-[#081210] hover:file:opacity-90 cursor-pointer pt-1" />
+          <p id="selectedFileInfo" class="hidden text-[11px] text-[#39E58C] font-mono"></p>
         </div>
 
-        <div class="flex items-center justify-between gap-4 pt-1">
-          <p id="uploadStatus" class="text-xs text-[#39E58C]"></p>
+        <div id="uploadStatusBox" class="hidden rounded-lg p-3 text-xs leading-relaxed"></div>
+
+        <div class="flex items-center justify-end gap-4 pt-1">
           <button type="submit" id="publishBtn"
-            class="px-5 py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-xs sm:text-sm hover:opacity-95 transition cursor-pointer">
+            class="px-5 py-2.5 rounded-lg bg-[#39E58C] text-[#081210] font-bold text-xs sm:text-sm hover:opacity-95 transition cursor-pointer disabled:opacity-60">
             Siarkan Sekarang
           </button>
         </div>
@@ -104,16 +110,68 @@
   <footer class="border-t border-[#1A3831] bg-[#060E0C] py-8 px-4 text-xs text-gray-400 mt-10">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
       <p class="font-bold text-white">&copy; 2026 XR6 Labs HQ&trade; – Research &amp; Engineering. Hak Cipta Terpelihara.</p>
-      <a href="/policies" class="text-[#39E58C] hover:underline">Notis Privasi (PDPA) &amp; Polisi</a>
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="/contact" class="text-gray-300 hover:text-[#39E58C]">Contact</a>
+        <a href="/policies" class="text-[#39E58C] hover:underline">Notis Privasi (PDPA) &amp; Polisi</a>
+      </div>
     </div>
   </footer>
 
   <script>
+    const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
     let isAuthorizedAdmin = false;
     document.getElementById('activityDateInput').valueAsDate = new Date();
 
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showUploadStatus(msg, isError = false) {
+      const box = document.getElementById('uploadStatusBox');
+      box.textContent = msg;
+      box.className = isError
+        ? 'rounded-lg p-3 text-xs leading-relaxed bg-red-950/80 border border-red-500/60 text-red-200'
+        : 'rounded-lg p-3 text-xs leading-relaxed bg-emerald-950/80 border border-[#39E58C]/60 text-[#39E58C]';
+      box.classList.remove('hidden');
+    }
+
+    document.getElementById('mediaFileInput').addEventListener('change', function() {
+      const info = document.getElementById('selectedFileInfo');
+      const file = this.files && this.files[0];
+      if (!file) {
+        info.classList.add('hidden');
+        return;
+      }
+      const mb = (file.size / (1024 * 1024)).toFixed(2);
+      info.textContent = `Fail dipilih: ${file.name} (${mb} MB)`;
+      info.className = file.size > MAX_MEDIA_BYTES
+        ? 'text-[11px] text-red-300 font-mono'
+        : 'text-[11px] text-[#39E58C] font-mono';
+      info.classList.remove('hidden');
+    });
+
+    async function checkStorageStatus() {
+      const badge = document.getElementById('storageBadge');
+      try {
+        const res = await fetch('/api/admin/announcements/status');
+        if (!res.ok) {
+          badge.textContent = `Status R2/D1: HTTP ${res.status}`;
+          return;
+        }
+        const st = await res.json();
+        if (st.hasMediaBucket && st.dbReady) {
+          badge.textContent = `R2 & D1 Aktif (Maks ${st.maxUploadMB} MB)`;
+          badge.className = 'px-2.5 py-1 rounded bg-emerald-950/70 border border-[#39E58C]/50 text-[#39E58C] font-mono';
+        } else {
+          const issues = [];
+          if (!st.hasMediaBucket) issues.push('R2 MEDIA_BUCKET tiada');
+          if (!st.dbReady) issues.push('D1: ' + (st.dbError || 'jadual tiada'));
+          badge.textContent = issues.join(' | ');
+          badge.className = 'px-2.5 py-1 rounded bg-red-950/70 border border-red-500/50 text-red-200 font-mono';
+        }
+      } catch {
+        badge.textContent = 'Gagal semak status storan';
+      }
     }
 
     // 1. Semak sama ada pengguna ialah Super Admin ('admin') atau Second Admin ('secondary_admin')
@@ -129,6 +187,7 @@
           const authLink = document.getElementById('authLink');
           authLink.textContent = 'Panel Admin';
           authLink.href = '/admin';
+          await checkStorageStatus();
         }
       } catch (e) {}
     }
@@ -139,7 +198,6 @@
       try {
         const res = await fetch('/api/announcements');
         const data = await res.json();
-
         if (!data.ok || !data.announcements.length) {
           feed.innerHTML = `
             <div class="xr6-card p-8 text-center space-y-2">
@@ -187,7 +245,6 @@
               </div>`;
           }
 
-          // Butang Padam HANYA dipaparkan kepada Super Admin & Second Admin
           const deleteBtnHtml = isAuthorizedAdmin ? `
             <button onclick="deleteAnnouncement('${item.id}')"
               class="px-3 py-1 rounded-lg bg-red-950/80 border border-red-500/50 text-red-200 text-[11px] font-semibold hover:bg-red-900 transition cursor-pointer">
@@ -205,7 +262,6 @@
                 </div>
                 ${deleteBtnHtml}
               </div>
-
               <h2 class="text-lg sm:text-xl font-bold text-white">${escapeHtml(item.title)}</h2>
               ${item.description ? `<p class="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">${escapeHtml(item.description)}</p>` : ''}
               ${mediaHtml}
@@ -220,10 +276,18 @@
     document.getElementById('announcementForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('publishBtn');
-      const statusEl = document.getElementById('uploadStatus');
+      const fileInput = document.getElementById('mediaFileInput');
+      const chosenFile = fileInput.files && fileInput.files[0];
+
+      if (chosenFile && chosenFile.size > MAX_MEDIA_BYTES) {
+        const mb = (chosenFile.size / (1024 * 1024)).toFixed(1);
+        showUploadStatus(`Fail terlalu besar (${mb} MB). Had maksimum muat naik ialah 50 MB.`, true);
+        return;
+      }
+
       btn.disabled = true;
       btn.textContent = 'Sedang memuat naik...';
-      statusEl.textContent = '';
+      document.getElementById('uploadStatusBox').classList.add('hidden');
 
       try {
         const formData = new FormData(this);
@@ -231,17 +295,26 @@
           method: 'POST',
           body: formData
         });
-        const data = await res.json();
-        if (data.ok) {
+        const rawText = await res.text();
+        let data = null;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          showUploadStatus(`Ralat pelayan (HTTP ${res.status}): ${rawText.slice(0, 180)}`, true);
+          return;
+        }
+
+        if (res.ok && data && data.ok) {
           this.reset();
           document.getElementById('activityDateInput').valueAsDate = new Date();
-          statusEl.textContent = 'Berjaya disiarkan ke ruangan aktiviti!';
-          loadAnnouncements();
+          document.getElementById('selectedFileInfo').classList.add('hidden');
+          showUploadStatus('Berjaya disiarkan ke ruangan aktiviti!', false);
+          await loadAnnouncements();
         } else {
-          alert(data.error || 'Gagal memuat naik pengumuman.');
+          showUploadStatus((data && data.error) ? data.error : `Gagal memuat naik (HTTP ${res.status}).`, true);
         }
       } catch (err) {
-        alert('Ralat rangkaian semasa memuat naik fail.');
+        showUploadStatus('Ralat sambungan pelayar: ' + (err && err.message ? err.message : 'Gagal menghubungi pelayan.'), true);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Siarkan Sekarang';
@@ -257,10 +330,10 @@
         if (data.ok) {
           loadAnnouncements();
         } else {
-          alert(data.error || 'Gagal memadam aktiviti.');
+          showUploadStatus(data.error || 'Gagal memadam aktiviti.', true);
         }
       } catch (err) {
-        alert('Ralat semasa memadam aktiviti.');
+        showUploadStatus('Ralat semasa memadam aktiviti: ' + (err.message || ''), true);
       }
     }
 
