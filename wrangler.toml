@@ -12,6 +12,10 @@ binding = "DB"
 database_name = "xr6-labs-production"
 database_id = "3ebdf1e8-6a70-4e68-80fa-75ed23bcda20"
 
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "xr6-announcements-media"
+
 # Plain text environment variables
 [vars]
 APP_ENV = "production"
