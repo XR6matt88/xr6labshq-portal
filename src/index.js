@@ -16,7 +16,8 @@ import { syncAllCommunities } from './sync.js';
 
 const ALLOWED_STATUSES = new Set(['pending', 'active', 'suspended']);
 const ALLOWED_ROLES = new Set(['member', 'secondary_admin', 'admin']);
-const MAX_ANNOUNCEMENT_MEDIA_BYTES = 50 * 1024 * 1024; // Had selamat 50 MB
+const MAX_ANNOUNCEMENT_MEDIA_BYTES = 50 * 1024 * 1024; // Had selamat 50 MB setiap fail
+const MAX_ATTACHMENTS_PER_POST = 10;
 
 function detectMediaCategory(mime, filename) {
   const m = String(mime || '').toLowerCase();
@@ -31,6 +32,43 @@ function detectMediaCategory(mime, filename) {
     return 'video';
   }
   return 'document';
+}
+
+function normaliseAnnouncementRow(row) {
+  let attachments = [];
+  if (row.media_type === 'multi' && row.media_filename) {
+    try {
+      const parsed = JSON.parse(row.media_filename);
+      if (Array.isArray(parsed)) {
+        attachments = parsed
+          .filter((a) => a && typeof a.key === 'string' && a.key.startsWith('announcements/'))
+          .map((a) => ({
+            key: a.key,
+            filename: String(a.filename || 'lampiran'),
+            mime: String(a.mime || 'application/octet-stream'),
+            type: String(a.type || detectMediaCategory(a.mime, a.filename))
+          }));
+      }
+    } catch {}
+  }
+
+  if (attachments.length === 0 && row.media_key) {
+    attachments = [
+      {
+        key: row.media_key,
+        filename: row.media_filename || 'lampiran',
+        mime: row.media_mime || 'application/octet-stream',
+        type: row.media_type && row.media_type !== 'multi'
+          ? row.media_type
+          : detectMediaCategory(row.media_mime, row.media_filename)
+      }
+    ];
+  }
+
+  return {
+    ...row,
+    attachments
+  };
 }
 
 export default {
@@ -307,13 +345,14 @@ export default {
         return json({ ok: true });
       }
 
-      // 8. API Pengumuman & Aktiviti (Paparan Awam + Diagnostik + Muat Naik R2 Raw PUT + Siar JSON)
+      // 8. API Pengumuman & Aktiviti (Paparan Awam + Diagnostik + Muat Naik R2 Raw PUT + Siar Multi-Fail)
       if (path === '/api/announcements' && method === 'GET') {
         const { results } = await env.DB.prepare(
           `SELECT id, title, category, description, media_type, media_key, media_filename, media_mime, activity_date, created_at
            FROM announcements WHERE is_active = 1 ORDER BY activity_date DESC, created_at DESC`
         ).all();
-        return json({ ok: true, announcements: results || [] });
+        const announcements = (results || []).map(normaliseAnnouncementRow);
+        return json({ ok: true, announcements });
       }
 
       if (path === '/api/admin/announcements/status' && method === 'GET') {
@@ -336,11 +375,11 @@ export default {
           hasMediaBucket: Boolean(env.MEDIA_BUCKET),
           dbReady,
           dbError,
-          maxUploadMB: Math.round(MAX_ANNOUNCEMENT_MEDIA_BYTES / (1024 * 1024))
+          maxUploadMB: Math.round(MAX_ANNOUNCEMENT_MEDIA_BYTES / (1024 * 1024)),
+          maxFiles: MAX_ATTACHMENTS_PER_POST
         });
       }
 
-      // Muat naik terus aliran binari fail ke R2 tanpa overhead FormData
       if (path === '/api/admin/announcements/media' && method === 'PUT') {
         const member = await getCurrentMember(request, env);
         if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
@@ -448,6 +487,7 @@ export default {
         let mediaKey = null;
         let mediaFilename = null;
         let mediaMime = null;
+        const uploadedKeysToCleanup = [];
 
         if (ct.includes('application/json')) {
           let body;
@@ -463,15 +503,44 @@ export default {
           const rawDate = String(body.activity_date || '').trim();
           if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) activityDate = rawDate;
 
-          if (body.media_key) {
+          const incomingAttachments = Array.isArray(body.attachments) ? body.attachments : [];
+          const cleanAttachments = [];
+
+          for (const item of incomingAttachments.slice(0, MAX_ATTACHMENTS_PER_POST)) {
+            if (!item || typeof item.key !== 'string') continue;
+            const candidateKey = item.key.trim();
+            if (!candidateKey.startsWith('announcements/') || candidateKey.includes('..')) {
+              return json({ ok: false, error: 'Rujukan key lampiran tidak sah.' }, 400);
+            }
+            const fname = String(item.filename || 'lampiran').slice(0, 180);
+            const fmime = String(item.mime || 'application/octet-stream').slice(0, 120);
+            const ftype = String(item.type || detectMediaCategory(fmime, fname));
+            cleanAttachments.push({ key: candidateKey, filename: fname, mime: fmime, type: ftype });
+            uploadedKeysToCleanup.push(candidateKey);
+          }
+
+          if (cleanAttachments.length === 0 && body.media_key) {
             const candidateKey = String(body.media_key).trim();
             if (!candidateKey.startsWith('announcements/') || candidateKey.includes('..')) {
               return json({ ok: false, error: 'Rujukan media_key tidak sah.' }, 400);
             }
-            mediaKey = candidateKey;
-            mediaFilename = String(body.media_filename || 'lampiran').slice(0, 180);
-            mediaMime = String(body.media_mime || 'application/octet-stream').slice(0, 120);
-            mediaType = String(body.media_type || detectMediaCategory(mediaMime, mediaFilename));
+            const fname = String(body.media_filename || 'lampiran').slice(0, 180);
+            const fmime = String(body.media_mime || 'application/octet-stream').slice(0, 120);
+            const ftype = String(body.media_type || detectMediaCategory(fmime, fname));
+            cleanAttachments.push({ key: candidateKey, filename: fname, mime: fmime, type: ftype });
+            uploadedKeysToCleanup.push(candidateKey);
+          }
+
+          if (cleanAttachments.length === 1) {
+            mediaKey = cleanAttachments[0].key;
+            mediaFilename = cleanAttachments[0].filename;
+            mediaMime = cleanAttachments[0].mime;
+            mediaType = cleanAttachments[0].type;
+          } else if (cleanAttachments.length > 1) {
+            mediaType = 'multi';
+            mediaKey = cleanAttachments[0].key;
+            mediaMime = cleanAttachments[0].mime;
+            mediaFilename = JSON.stringify(cleanAttachments);
           }
         } else {
           let formData;
@@ -504,6 +573,7 @@ export default {
             await env.MEDIA_BUCKET.put(mediaKey, file, {
               httpMetadata: { contentType: mediaMime }
             });
+            uploadedKeysToCleanup.push(mediaKey);
           }
         }
 
@@ -518,8 +588,10 @@ export default {
           `).bind(id, title, category, description, mediaType, mediaKey, mediaFilename, mediaMime, activityDate, member.email).run();
         } catch (dbErr) {
           console.error('D1 insert announcement error:', dbErr);
-          if (mediaKey && env.MEDIA_BUCKET) {
-            await env.MEDIA_BUCKET.delete(mediaKey).catch(() => {});
+          if (env.MEDIA_BUCKET) {
+            for (const k of uploadedKeysToCleanup) {
+              await env.MEDIA_BUCKET.delete(k).catch(() => {});
+            }
           }
           return json({
             ok: false,
@@ -527,7 +599,11 @@ export default {
           }, 500);
         }
 
-        await logAudit(env, member.id, 'CREATE_ANNOUNCEMENT', 'announcement', id, { title, mediaType });
+        await logAudit(env, member.id, 'CREATE_ANNOUNCEMENT', 'announcement', id, {
+          title,
+          mediaType,
+          fileCount: uploadedKeysToCleanup.length
+        });
         return json({ ok: true, id });
       }
 
@@ -538,10 +614,26 @@ export default {
         }
 
         const id = path.replace('/api/admin/announcements/', '').trim();
-        const existing = await env.DB.prepare(`SELECT media_key FROM announcements WHERE id = ?`).bind(id).first();
+        const existing = await env.DB.prepare(
+          `SELECT media_type, media_key, media_filename FROM announcements WHERE id = ?`
+        ).bind(id).first();
 
-        if (existing && existing.media_key && env.MEDIA_BUCKET) {
-          await env.MEDIA_BUCKET.delete(existing.media_key).catch(() => {});
+        if (existing && env.MEDIA_BUCKET) {
+          const keysToDelete = new Set();
+          if (existing.media_key) keysToDelete.add(existing.media_key);
+          if (existing.media_type === 'multi' && existing.media_filename) {
+            try {
+              const parsed = JSON.parse(existing.media_filename);
+              if (Array.isArray(parsed)) {
+                parsed.forEach((a) => {
+                  if (a && typeof a.key === 'string') keysToDelete.add(a.key);
+                });
+              }
+            } catch {}
+          }
+          for (const k of keysToDelete) {
+            await env.MEDIA_BUCKET.delete(k).catch(() => {});
+          }
         }
 
         await env.DB.prepare(`DELETE FROM announcements WHERE id = ?`).bind(id).run();
