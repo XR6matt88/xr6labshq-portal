@@ -16,7 +16,7 @@ import { syncAllCommunities } from './sync.js';
 
 const ALLOWED_STATUSES = new Set(['pending', 'active', 'suspended']);
 const ALLOWED_ROLES = new Set(['member', 'secondary_admin', 'admin']);
-const MAX_ANNOUNCEMENT_MEDIA_BYTES = 50 * 1024 * 1024; // Had selamat 50 MB untuk Worker FormData + R2 stream
+const MAX_ANNOUNCEMENT_MEDIA_BYTES = 50 * 1024 * 1024; // Had selamat 50 MB
 
 function detectMediaCategory(mime, filename) {
   const m = String(mime || '').toLowerCase();
@@ -307,7 +307,7 @@ export default {
         return json({ ok: true });
       }
 
-      // 8. API Pengumuman & Aktiviti (Paparan Awam + Diagnostik Admin + Muat Naik/Padam)
+      // 8. API Pengumuman & Aktiviti (Paparan Awam + Diagnostik + Muat Naik R2 Raw PUT + Siar JSON)
       if (path === '/api/announcements' && method === 'GET') {
         const { results } = await env.DB.prepare(
           `SELECT id, title, category, description, media_type, media_key, media_filename, media_mime, activity_date, created_at
@@ -337,6 +337,74 @@ export default {
           dbReady,
           dbError,
           maxUploadMB: Math.round(MAX_ANNOUNCEMENT_MEDIA_BYTES / (1024 * 1024))
+        });
+      }
+
+      // Muat naik terus aliran binari fail ke R2 tanpa overhead FormData
+      if (path === '/api/admin/announcements/media' && method === 'PUT') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses ditolak: Sila log masuk sebagai Admin atau Second Admin.' }, 403);
+        }
+
+        if (!env.MEDIA_BUCKET) {
+          return json({
+            ok: false,
+            error: 'Storan MEDIA_BUCKET (R2: xr6-announcements-media) belum disambungkan di Cloudflare Workers.'
+          }, 500);
+        }
+
+        const contentLen = Number(request.headers.get('Content-Length') || 0);
+        if (contentLen > MAX_ANNOUNCEMENT_MEDIA_BYTES) {
+          return json({
+            ok: false,
+            error: `Saiz fail (${(contentLen / (1024 * 1024)).toFixed(1)} MB) melebihi had maksimum 50 MB.`
+          }, 413);
+        }
+
+        let rawFilename = 'lampiran';
+        try {
+          rawFilename = decodeURIComponent(request.headers.get('X-Media-Name') || 'lampiran');
+        } catch {
+          rawFilename = request.headers.get('X-Media-Name') || 'lampiran';
+        }
+        const mediaFilename = rawFilename.slice(0, 180) || 'lampiran';
+        const mediaMime = (request.headers.get('X-Media-Mime') || 'application/octet-stream').slice(0, 120);
+        const mediaType = detectMediaCategory(mediaMime, mediaFilename);
+        const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_') || 'lampiran';
+        const mediaKey = `announcements/${crypto.randomUUID()}-${safeName}`;
+
+        try {
+          if (contentLen > 0 && request.body) {
+            await env.MEDIA_BUCKET.put(mediaKey, request.body, {
+              httpMetadata: { contentType: mediaMime }
+            });
+          } else {
+            const buf = await request.arrayBuffer();
+            if (!buf || buf.byteLength === 0) {
+              return json({ ok: false, error: 'Fail kosong atau tiada kandungan diterima.' }, 400);
+            }
+            if (buf.byteLength > MAX_ANNOUNCEMENT_MEDIA_BYTES) {
+              return json({ ok: false, error: 'Saiz fail melebihi had maksimum 50 MB.' }, 413);
+            }
+            await env.MEDIA_BUCKET.put(mediaKey, buf, {
+              httpMetadata: { contentType: mediaMime }
+            });
+          }
+        } catch (r2Err) {
+          console.error('R2 PUT media error:', r2Err);
+          return json({
+            ok: false,
+            error: `Gagal menyimpan fail ke R2 MEDIA_BUCKET: ${r2Err?.message || 'Ralat storan R2'}`
+          }, 500);
+        }
+
+        return json({
+          ok: true,
+          mediaKey,
+          mediaFilename,
+          mediaMime,
+          mediaType
         });
       }
 
@@ -370,67 +438,77 @@ export default {
           return json({ ok: false, error: 'Akses ditolak: Sila log masuk sebagai Admin atau Second Admin.' }, 403);
         }
 
-        let formData;
-        try {
-          formData = await request.formData();
-        } catch (err) {
-          console.error('FormData parse error:', err);
-          return json({ ok: false, error: 'Borang atau fail muat naik gagal diproses. Pastikan saiz fail di bawah 50 MB.' }, 400);
-        }
-
-        const title = String(formData.get('title') || '').trim().slice(0, 200);
-        const category = String(formData.get('category') || 'Aktiviti').trim().slice(0, 80) || 'Aktiviti';
-        const description = String(formData.get('description') || '').trim().slice(0, 10000);
-        const rawDate = String(formData.get('activity_date') || '').trim();
-        const activityDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-          ? rawDate
-          : new Date().toISOString().slice(0, 10);
-        const file = formData.get('media_file');
-
-        if (!title) {
-          return json({ ok: false, error: 'Tajuk pengumuman wajib diisi.' }, 400);
-        }
-
+        const ct = (request.headers.get('Content-Type') || '').toLowerCase();
         const id = crypto.randomUUID();
+        let title = '';
+        let category = 'Aktiviti';
+        let description = '';
+        let activityDate = new Date().toISOString().slice(0, 10);
         let mediaType = 'none';
         let mediaKey = null;
         let mediaFilename = null;
         let mediaMime = null;
 
-        if (file && typeof file === 'object' && file.size > 0) {
-          if (file.size > MAX_ANNOUNCEMENT_MEDIA_BYTES) {
-            return json({
-              ok: false,
-              error: `Saiz fail (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi had maksimum 50 MB.`
-            }, 413);
-          }
-
-          if (!env.MEDIA_BUCKET) {
-            return json({
-              ok: false,
-              error: 'Storan MEDIA_BUCKET (R2: xr6-announcements-media) belum disambungkan di Cloudflare Workers.'
-            }, 500);
-          }
-
-          mediaMime = file.type || 'application/octet-stream';
-          mediaFilename = file.name || 'lampiran';
-          mediaType = detectMediaCategory(mediaMime, mediaFilename);
-
-          const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_') || 'lampiran';
-          mediaKey = `announcements/${id}-${safeName}`;
-
+        if (ct.includes('application/json')) {
+          let body;
           try {
-            const payload = typeof file.stream === 'function' ? file.stream() : file;
-            await env.MEDIA_BUCKET.put(mediaKey, payload, {
+            body = await request.json();
+          } catch {
+            return json({ ok: false, error: 'Format JSON pengumuman tidak sah.' }, 400);
+          }
+
+          title = String(body.title || '').trim().slice(0, 200);
+          category = String(body.category || 'Aktiviti').trim().slice(0, 80) || 'Aktiviti';
+          description = String(body.description || '').trim().slice(0, 10000);
+          const rawDate = String(body.activity_date || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) activityDate = rawDate;
+
+          if (body.media_key) {
+            const candidateKey = String(body.media_key).trim();
+            if (!candidateKey.startsWith('announcements/') || candidateKey.includes('..')) {
+              return json({ ok: false, error: 'Rujukan media_key tidak sah.' }, 400);
+            }
+            mediaKey = candidateKey;
+            mediaFilename = String(body.media_filename || 'lampiran').slice(0, 180);
+            mediaMime = String(body.media_mime || 'application/octet-stream').slice(0, 120);
+            mediaType = String(body.media_type || detectMediaCategory(mediaMime, mediaFilename));
+          }
+        } else {
+          let formData;
+          try {
+            formData = await request.formData();
+          } catch (err) {
+            console.error('FormData parse error:', err);
+            return json({ ok: false, error: 'Borang atau fail gagal diproses.' }, 400);
+          }
+
+          title = String(formData.get('title') || '').trim().slice(0, 200);
+          category = String(formData.get('category') || 'Aktiviti').trim().slice(0, 80) || 'Aktiviti';
+          description = String(formData.get('description') || '').trim().slice(0, 10000);
+          const rawDate = String(formData.get('activity_date') || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) activityDate = rawDate;
+
+          const file = formData.get('media_file');
+          if (file && typeof file === 'object' && file.size > 0) {
+            if (file.size > MAX_ANNOUNCEMENT_MEDIA_BYTES) {
+              return json({ ok: false, error: 'Saiz fail melebihi had maksimum 50 MB.' }, 413);
+            }
+            if (!env.MEDIA_BUCKET) {
+              return json({ ok: false, error: 'Storan MEDIA_BUCKET belum disambungkan di Cloudflare.' }, 500);
+            }
+            mediaMime = file.type || 'application/octet-stream';
+            mediaFilename = file.name || 'lampiran';
+            mediaType = detectMediaCategory(mediaMime, mediaFilename);
+            const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_') || 'lampiran';
+            mediaKey = `announcements/${id}-${safeName}`;
+            await env.MEDIA_BUCKET.put(mediaKey, file, {
               httpMetadata: { contentType: mediaMime }
             });
-          } catch (r2Err) {
-            console.error('R2 put error:', r2Err);
-            return json({
-              ok: false,
-              error: `Gagal menyimpan fail ke R2 MEDIA_BUCKET: ${r2Err?.message || 'Ralat storan R2'}`
-            }, 500);
           }
+        }
+
+        if (!title) {
+          return json({ ok: false, error: 'Tajuk pengumuman wajib diisi.' }, 400);
         }
 
         try {
