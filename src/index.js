@@ -16,6 +16,7 @@ import { syncAllCommunities } from './sync.js';
 
 const ALLOWED_STATUSES = new Set(['pending', 'active', 'suspended']);
 const ALLOWED_ROLES = new Set(['member', 'secondary_admin', 'admin']);
+const MAX_ANNOUNCEMENT_MEDIA_BYTES = 25 * 1024 * 1024;
 
 export default {
   async scheduled(event, env, ctx) {
@@ -54,6 +55,133 @@ export default {
 
         const { results } = await env.DB.prepare(query).bind(...params).all();
         return json({ ok: true, records: results || [] });
+      }
+
+      // Pengumuman & aktiviti yang aktif dipaparkan kepada semua pelawat.
+      if (path === '/api/announcements' && method === 'GET') {
+        const { results } = await env.DB.prepare(`
+          SELECT id, title, category, description, media_type, media_key,
+                 media_filename, media_mime, activity_date, created_at
+          FROM announcements
+          WHERE is_active = 1
+          ORDER BY activity_date DESC, created_at DESC
+        `).all();
+        return json({ ok: true, announcements: results || [] });
+      }
+
+      // Strim media awam daripada R2. Kekunci dihadkan kepada objek pengumuman.
+      if (path.startsWith('/api/media/') && method === 'GET') {
+        let key;
+        try {
+          key = decodeURIComponent(path.slice('/api/media/'.length));
+        } catch {
+          return new Response('Media tidak dijumpai', { status: 404 });
+        }
+
+        if (!env.MEDIA_BUCKET || !key || !key.startsWith('announcements/') || key.includes('..')) {
+          return new Response('Media tidak dijumpai', { status: 404 });
+        }
+
+        const object = await env.MEDIA_BUCKET.get(key);
+        if (!object) return new Response('Fail tidak wujud', { status: 404 });
+
+        const headers = new Headers();
+        object.writeHttpMetadata(headers);
+        headers.set('ETag', object.httpEtag);
+        headers.set('X-Content-Type-Options', 'nosniff');
+        headers.set('Cache-Control', 'public, max-age=3600');
+        return new Response(object.body, { headers });
+      }
+
+      // Muat naik pengumuman dan lampiran: admin atau secondary_admin sahaja.
+      if (path === '/api/admin/announcements' && method === 'POST') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses ditolak: Hanya untuk Admin dan Second Admin.' }, 403);
+        }
+
+        let formData;
+        try {
+          formData = await request.formData();
+        } catch {
+          return json({ ok: false, error: 'Format borang tidak sah.' }, 400);
+        }
+
+        const title = String(formData.get('title') || '').trim().slice(0, 200);
+        const category = String(formData.get('category') || 'Aktiviti').trim().slice(0, 80);
+        const description = String(formData.get('description') || '').trim().slice(0, 10000);
+        const activityDate = String(formData.get('activity_date') || new Date().toISOString().slice(0, 10)).trim();
+        const file = formData.get('media_file');
+
+        if (!title) {
+          return json({ ok: false, error: 'Tajuk pengumuman wajib diisi.' }, 400);
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(activityDate) || Number.isNaN(Date.parse(`${activityDate}T00:00:00Z`))) {
+          return json({ ok: false, error: 'Tarikh aktiviti tidak sah.' }, 400);
+        }
+
+        const id = crypto.randomUUID();
+        let mediaType = 'none';
+        let mediaKey = null;
+        let mediaFilename = null;
+        let mediaMime = null;
+
+        if (file && typeof file === 'object' && typeof file.arrayBuffer === 'function' && file.size > 0) {
+          if (!env.MEDIA_BUCKET) {
+            return json({ ok: false, error: 'Storan MEDIA_BUCKET belum disambungkan di Cloudflare.' }, 500);
+          }
+          if (file.size > MAX_ANNOUNCEMENT_MEDIA_BYTES) {
+            return json({ ok: false, error: 'Saiz fail maksimum ialah 25 MB.' }, 413);
+          }
+
+          mediaMime = String(file.type || 'application/octet-stream').slice(0, 160);
+          mediaFilename = String(file.name || 'lampiran').slice(0, 255);
+          if (mediaMime.startsWith('image/')) mediaType = 'image';
+          else if (mediaMime.startsWith('audio/')) mediaType = 'audio';
+          else if (mediaMime.startsWith('video/')) mediaType = 'video';
+          else mediaType = 'document';
+
+          const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 180) || 'lampiran';
+          mediaKey = `announcements/${id}-${safeName}`;
+          await env.MEDIA_BUCKET.put(mediaKey, await file.arrayBuffer(), {
+            httpMetadata: { contentType: mediaMime }
+          });
+        }
+
+        await env.DB.prepare(`
+          INSERT INTO announcements (
+            id, title, category, description, media_type, media_key,
+            media_filename, media_mime, activity_date, created_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          id, title, category, description, mediaType, mediaKey,
+          mediaFilename, mediaMime, activityDate, member.email
+        ).run();
+
+        return json({ ok: true, id });
+      }
+
+      // Padam pengumuman serta lampiran R2: admin atau secondary_admin sahaja.
+      if (path.startsWith('/api/admin/announcements/') && method === 'DELETE') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses ditolak.' }, 403);
+        }
+
+        let id;
+        try {
+          id = decodeURIComponent(path.slice('/api/admin/announcements/'.length)).trim();
+        } catch {
+          return json({ ok: false, error: 'ID pengumuman tidak sah.' }, 400);
+        }
+        if (!id || id.includes('/')) return json({ ok: false, error: 'ID pengumuman tidak sah.' }, 400);
+
+        const existing = await env.DB.prepare(`SELECT media_key FROM announcements WHERE id = ?`).bind(id).first();
+        if (existing?.media_key && env.MEDIA_BUCKET) {
+          await env.MEDIA_BUCKET.delete(existing.media_key);
+        }
+        await env.DB.prepare(`DELETE FROM announcements WHERE id = ?`).bind(id).run();
+        return json({ ok: true });
       }
 
       // 2. API Auth: Minta Pautan Log Masuk / Pendaftaran (Magic Link)

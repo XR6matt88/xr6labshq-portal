@@ -86,3 +86,21 @@ CREATE TABLE IF NOT EXISTS sync_logs (
   error_message TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'Aktiviti',
+  description TEXT NOT NULL DEFAULT '',
+  media_type TEXT NOT NULL DEFAULT 'none',
+  media_key TEXT,
+  media_filename TEXT,
+  media_mime TEXT,
+  activity_date TEXT NOT NULL,
+  created_by TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_active_date
+  ON announcements (is_active, activity_date DESC, created_at DESC);
