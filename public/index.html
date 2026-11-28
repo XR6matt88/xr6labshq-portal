@@ -100,13 +100,14 @@
         <span>XR6 LABS HQ<sup class="text-[#D7B46A] text-[10px] ml-0.5">™</sup></span>
       </a>
 
-      <nav class="hidden lg:flex items-center gap-3.5 text-xs font-medium text-gray-300">
+      <nav class="hidden lg:flex items-center gap-3 text-xs font-medium text-gray-300">
         <a href="/" class="text-[#39E58C] font-bold">Utama</a>
         <a href="/about" class="hover:text-[#39E58C] transition">Tentang HQ</a>
         <a href="/research-engineering" class="hover:text-[#39E58C] transition">Research &amp; Engineering</a>
         <a href="/research-hub" class="hover:text-[#39E58C] transition">Research Hub</a>
         <a href="/library" class="hover:text-[#39E58C] transition">Library</a>
         <a href="/announcements" id="navAnnouncementsDesktop" class="text-[#D7B46A] hover:text-[#39E58C] font-semibold transition">Aktiviti &amp; Hebahan</a>
+        <a href="/tilawah" id="navTilawahDesktop" class="text-[#37DDF4] hover:text-[#39E58C] font-semibold transition">Tilawah &amp; Media</a>
         <a href="/xr6-academic/sassi" class="hover:text-[#39E58C] transition">XR6 Academic</a>
         <a href="/compounds/XR6-CMP-001" class="hover:text-[#39E58C] transition">Compounds</a>
         <a href="/policies" class="hover:text-[#39E58C] transition">Polisi</a>
@@ -127,6 +128,7 @@
     <div class="lg:hidden border-t border-[#1A3831]/70 bg-[#060E0C]/95 px-4 py-2 flex items-center gap-4 overflow-x-auto text-xs text-gray-300 whitespace-nowrap">
       <a href="/" class="text-[#39E58C] font-bold">Utama</a>
       <a href="/announcements" id="navAnnouncementsMobile" class="text-[#D7B46A] font-semibold">Aktiviti &amp; Hebahan</a>
+      <a href="/tilawah" id="navTilawahMobile" class="text-[#37DDF4] font-semibold">Tilawah &amp; Media</a>
       <a href="/about" class="hover:text-[#39E58C]">Tentang HQ</a>
       <a href="/research-engineering" class="hover:text-[#39E58C]">Research &amp; Engineering</a>
       <a href="/research-hub" class="hover:text-[#39E58C]">Research Hub</a>
@@ -198,6 +200,9 @@
           <a href="/announcements" id="btnAnnouncementsHero" class="px-5 py-2.5 rounded-lg bg-[#0E1F1B] border border-[#D7B46A]/60 text-[#D7B46A] font-bold text-xs sm:text-sm hover:bg-[#132924] transition">
             Aktiviti &amp; Audio Overview
           </a>
+          <a href="/tilawah" id="btnTilawahHero" class="px-5 py-2.5 rounded-lg bg-[#0E1F1B] border border-[#37DDF4]/60 text-[#37DDF4] font-bold text-xs sm:text-sm hover:bg-[#132924] transition">
+            Studio Tilawah &amp; YouTube
+          </a>
           <a href="/register" id="btnRegister" class="px-5 py-2.5 rounded-lg bg-[#132924] border border-[#1A3831] text-white font-semibold text-xs sm:text-sm hover:border-[#39E58C] transition">
             Daftar Ahli Penyelidik
           </a>
@@ -244,6 +249,7 @@
           <div class="flex flex-wrap gap-4 pt-1 text-[#39E58C]">
             <a href="/about" class="hover:underline">Tentang HQ &amp; Tadbir Urus</a>
             <a href="/announcements" class="hover:underline text-[#D7B46A]">Aktiviti &amp; Hebahan</a>
+            <a href="/tilawah" class="hover:underline text-[#37DDF4]">Studio Tilawah &amp; Media</a>
             <a href="/policies" class="hover:underline">Notis Privasi (PDPA) &amp; Polisi</a>
             <a href="/compounds/XR6-CMP-001" class="hover:underline">Chemical Repository (XR6-CMP-001)</a>
             <a href="mailto:hq@ac.xr6labs.com" class="hover:underline">hq@ac.xr6labs.com</a>
@@ -303,7 +309,9 @@
           btnLang: 'BM | EN',
           btnLogin: 'Log masuk',
           navAnnouncements: 'Aktiviti & Hebahan',
+          navTilawah: 'Tilawah & Media',
           btnAnnouncementsHero: 'Aktiviti & Audio Overview',
+          btnTilawahHero: 'Studio Tilawah & YouTube',
           clockTitle: 'Jadual Waktu Semasa & Falak HQ',
           heroTitle: 'Menjana Kejuruteraan Bersepadu Berpaksikan Nilai Rabbani',
           heroDesc: 'Di XR6 Labs HQ, kami mendakap keteguhan forged hardened steel dalam mempertahankan kebenaran sains dan teknologi, serta kelembutan berkasih sayang dalam jalinan silaturrahim sesama makhluk demi kemaslahatan ummah.',
@@ -317,7 +325,9 @@
           btnLang: 'EN | BM',
           btnLogin: 'Sign In',
           navAnnouncements: 'Activities & Bulletins',
+          navTilawah: 'Tilawah & Media',
           btnAnnouncementsHero: 'Activities & Audio Overview',
+          btnTilawahHero: 'Tilawah Studio & YouTube',
           clockTitle: 'HQ Live Time & Islamic Calendar',
           heroTitle: 'Forging Integrated Engineering Anchored on Divine Values',
           heroDesc: 'At XR6 Labs HQ, we uphold the resilience of forged hardened steel in defending scientific and technological truth, paired with heartfelt compassion in fostering silaturrahim across humanity.',
@@ -336,7 +346,10 @@
         document.getElementById('btnLogin').textContent = t.btnLogin;
         document.getElementById('navAnnouncementsDesktop').textContent = t.navAnnouncements;
         document.getElementById('navAnnouncementsMobile').textContent = t.navAnnouncements;
+        document.getElementById('navTilawahDesktop').textContent = t.navTilawah;
+        document.getElementById('navTilawahMobile').textContent = t.navTilawah;
         document.getElementById('btnAnnouncementsHero').textContent = t.btnAnnouncementsHero;
+        document.getElementById('btnTilawahHero').textContent = t.btnTilawahHero;
         document.getElementById('clockTitle').textContent = t.clockTitle;
         document.getElementById('heroTitle').textContent = t.heroTitle;
         document.getElementById('heroDesc').textContent = t.heroDesc;
