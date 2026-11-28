@@ -16,6 +16,7 @@ import { syncAllCommunities } from './sync.js';
 
 const ALLOWED_STATUSES = new Set(['pending', 'active', 'suspended']);
 const ALLOWED_ROLES = new Set(['member', 'secondary_admin', 'admin']);
+const ALLOWED_STUDIO_KINDS = new Set(['tilawah_audio', 'youtube_video', 'notebook_audio']);
 const MAX_ANNOUNCEMENT_MEDIA_BYTES = 50 * 1024 * 1024; // Had selamat 50 MB setiap fail
 const MAX_ATTACHMENTS_PER_POST = 10;
 
@@ -34,6 +35,53 @@ function detectMediaCategory(mime, filename) {
   return 'document';
 }
 
+function isAllowedMediaKey(key) {
+  return (
+    typeof key === 'string' &&
+    !key.includes('..') &&
+    (key.startsWith('announcements/') || key.startsWith('studio-media/'))
+  );
+}
+
+function extractYouTubeId(rawUrl) {
+  const trimmed = String(rawUrl || '').trim();
+  if (!trimmed) return null;
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+  let candidate = '';
+
+  if (host === 'youtu.be') {
+    candidate = parsed.pathname.split('/').filter(Boolean)[0] || '';
+  } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+    if (parsed.pathname === '/watch') {
+      candidate = parsed.searchParams.get('v') || '';
+    } else {
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      if (['embed', 'shorts', 'live', 'v'].includes(parts[0])) {
+        candidate = parts[1] || '';
+      }
+    }
+  } else {
+    return null;
+  }
+
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(candidate)) {
+    return null;
+  }
+
+  return {
+    youtubeId: candidate,
+    canonicalUrl: `https://www.youtube.com/watch?v=${candidate}`
+  };
+}
+
 function normaliseAnnouncementRow(row) {
   let attachments = [];
   if (row.media_type === 'multi' && row.media_filename) {
@@ -41,7 +89,7 @@ function normaliseAnnouncementRow(row) {
       const parsed = JSON.parse(row.media_filename);
       if (Array.isArray(parsed)) {
         attachments = parsed
-          .filter((a) => a && typeof a.key === 'string' && a.key.startsWith('announcements/'))
+          .filter((a) => a && isAllowedMediaKey(a.key))
           .map((a) => ({
             key: a.key,
             filename: String(a.filename || 'lampiran'),
@@ -69,6 +117,79 @@ function normaliseAnnouncementRow(row) {
     ...row,
     attachments
   };
+}
+
+function normaliseStudioMediaRow(row) {
+  let attachments = [];
+  if (row.attachments_json) {
+    try {
+      const parsed = JSON.parse(row.attachments_json);
+      if (Array.isArray(parsed)) {
+        attachments = parsed
+          .filter((a) => a && isAllowedMediaKey(a.key))
+          .map((a) => ({
+            key: a.key,
+            filename: String(a.filename || 'lampiran'),
+            mime: String(a.mime || 'application/octet-stream'),
+            type: String(a.type || detectMediaCategory(a.mime, a.filename))
+          }));
+      }
+    } catch {}
+  }
+
+  if (attachments.length === 0 && row.media_key && isAllowedMediaKey(row.media_key)) {
+    attachments = [
+      {
+        key: row.media_key,
+        filename: row.media_filename || 'lampiran',
+        mime: row.media_mime || 'application/octet-stream',
+        type: detectMediaCategory(row.media_mime, row.media_filename)
+      }
+    ];
+  }
+
+  return {
+    id: row.id,
+    title: row.title,
+    media_kind: row.media_kind,
+    reciter_or_source: row.reciter_or_source || '',
+    description: row.description || '',
+    youtube_url: row.youtube_url || null,
+    youtube_id: row.youtube_id || null,
+    media_key: row.media_key || null,
+    media_filename: row.media_filename || null,
+    media_mime: row.media_mime || null,
+    published_date: row.published_date,
+    created_at: row.created_at,
+    attachments
+  };
+}
+
+async function ensureStudioMediaTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS studio_media (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      media_kind TEXT NOT NULL,
+      reciter_or_source TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      youtube_url TEXT,
+      youtube_id TEXT,
+      media_key TEXT,
+      media_filename TEXT,
+      media_mime TEXT,
+      attachments_json TEXT,
+      published_date TEXT NOT NULL,
+      created_by TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await env.DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_studio_media_kind_date
+      ON studio_media (is_active, media_kind, published_date DESC, created_at DESC)
+  `).run();
 }
 
 export default {
@@ -345,7 +466,7 @@ export default {
         return json({ ok: true });
       }
 
-      // 8. API Pengumuman & Aktiviti (Paparan Awam + Diagnostik + Muat Naik R2 Raw PUT + Siar Multi-Fail)
+      // 8. API Pengumuman & Aktiviti + Muat Naik R2 Raw PUT + Penghantaran Byte-Range & Muat Turun
       if (path === '/api/announcements' && method === 'GET') {
         const { results } = await env.DB.prepare(
           `SELECT id, title, category, description, media_type, media_key, media_filename, media_mime, activity_date, created_at
@@ -411,7 +532,8 @@ export default {
         const mediaMime = (request.headers.get('X-Media-Mime') || 'application/octet-stream').slice(0, 120);
         const mediaType = detectMediaCategory(mediaMime, mediaFilename);
         const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_') || 'lampiran';
-        const mediaKey = `announcements/${crypto.randomUUID()}-${safeName}`;
+        const reqFolder = url.searchParams.get('folder') === 'studio-media' ? 'studio-media' : 'announcements';
+        const mediaKey = `${reqFolder}/${crypto.randomUUID()}-${safeName}`;
 
         try {
           if (contentLen > 0 && request.body) {
@@ -455,11 +577,16 @@ export default {
           return new Response('Media tidak dijumpai', { status: 404 });
         }
 
-        if (!env.MEDIA_BUCKET || !key || !key.startsWith('announcements/') || key.includes('..')) {
+        if (!env.MEDIA_BUCKET || !isAllowedMediaKey(key)) {
           return new Response('Media tidak dijumpai', { status: 404 });
         }
 
-        const object = await env.MEDIA_BUCKET.get(key);
+        const isDownload = url.searchParams.get('download') === '1';
+        const rangeHeader = !isDownload ? request.headers.get('range') : null;
+        const object = await env.MEDIA_BUCKET.get(
+          key,
+          rangeHeader ? { range: request.headers } : undefined
+        );
         if (!object) return new Response('Fail tidak wujud', { status: 404 });
 
         const headers = new Headers();
@@ -468,7 +595,32 @@ export default {
         headers.set('Accept-Ranges', 'bytes');
         headers.set('X-Content-Type-Options', 'nosniff');
         headers.set('Cache-Control', 'public, max-age=3600');
-        return new Response(object.body, { headers });
+
+        if (isDownload) {
+          const fallbackName = key.split('/').pop()?.replace(/^[0-9a-f-]{36}-/i, '') || 'fail-xr6';
+          const rawName = (url.searchParams.get('name') || fallbackName).trim();
+          const safeUtf8 = rawName.replace(/[\r\n"\\\/]/g, '_').slice(0, 180) || 'fail-xr6';
+          const safeAscii = safeUtf8.replace(/[^\x20-\x7E]/g, '_') || 'fail-xr6';
+          headers.set(
+            'Content-Disposition',
+            `attachment; filename="${safeAscii}"; filename*=UTF-8''${encodeURIComponent(safeUtf8)}`
+          );
+        }
+
+        if (rangeHeader && object.range && typeof object.range.offset === 'number' && typeof object.range.length === 'number') {
+          if (object.range.length === 0 || !object.body) {
+            headers.set('Content-Range', `bytes */${object.size}`);
+            return new Response(null, { status: 416, headers });
+          }
+          const start = object.range.offset;
+          const end = start + object.range.length - 1;
+          headers.set('Content-Range', `bytes ${start}-${end}/${object.size}`);
+          headers.set('Content-Length', String(object.range.length));
+          return new Response(object.body, { status: 206, headers });
+        }
+
+        headers.set('Content-Length', String(object.size));
+        return new Response(object.body, { status: 200, headers });
       }
 
       if (path === '/api/admin/announcements' && method === 'POST') {
@@ -496,7 +648,6 @@ export default {
           } catch {
             return json({ ok: false, error: 'Format JSON pengumuman tidak sah.' }, 400);
           }
-
           title = String(body.title || '').trim().slice(0, 200);
           category = String(body.category || 'Aktiviti').trim().slice(0, 80) || 'Aktiviti';
           description = String(body.description || '').trim().slice(0, 10000);
@@ -509,7 +660,7 @@ export default {
           for (const item of incomingAttachments.slice(0, MAX_ATTACHMENTS_PER_POST)) {
             if (!item || typeof item.key !== 'string') continue;
             const candidateKey = item.key.trim();
-            if (!candidateKey.startsWith('announcements/') || candidateKey.includes('..')) {
+            if (!isAllowedMediaKey(candidateKey)) {
               return json({ ok: false, error: 'Rujukan key lampiran tidak sah.' }, 400);
             }
             const fname = String(item.filename || 'lampiran').slice(0, 180);
@@ -521,7 +672,7 @@ export default {
 
           if (cleanAttachments.length === 0 && body.media_key) {
             const candidateKey = String(body.media_key).trim();
-            if (!candidateKey.startsWith('announcements/') || candidateKey.includes('..')) {
+            if (!isAllowedMediaKey(candidateKey)) {
               return json({ ok: false, error: 'Rujukan media_key tidak sah.' }, 400);
             }
             const fname = String(body.media_filename || 'lampiran').slice(0, 180);
@@ -570,6 +721,7 @@ export default {
             mediaType = detectMediaCategory(mediaMime, mediaFilename);
             const safeName = mediaFilename.replace(/[^a-zA-Z0-9._-]/g, '_') || 'lampiran';
             mediaKey = `announcements/${id}-${safeName}`;
+
             await env.MEDIA_BUCKET.put(mediaKey, file, {
               httpMetadata: { contentType: mediaMime }
             });
@@ -612,7 +764,6 @@ export default {
         if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
           return json({ ok: false, error: 'Akses ditolak.' }, 403);
         }
-
         const id = path.replace('/api/admin/announcements/', '').trim();
         const existing = await env.DB.prepare(
           `SELECT media_type, media_key, media_filename FROM announcements WHERE id = ?`
@@ -638,6 +789,215 @@ export default {
 
         await env.DB.prepare(`DELETE FROM announcements WHERE id = ?`).bind(id).run();
         await logAudit(env, member.id, 'DELETE_ANNOUNCEMENT', 'announcement', id, {});
+        return json({ ok: true });
+      }
+
+      // 8a. API Studio Tilawah, Perkongsian YouTube & Audio Overview (NotebookLM)
+      if (path === '/api/studio-media' && method === 'GET') {
+        await ensureStudioMediaTable(env);
+        const kind = (url.searchParams.get('kind') || '').trim();
+        let query = `
+          SELECT id, title, media_kind, reciter_or_source, description, youtube_url, youtube_id,
+                 media_key, media_filename, media_mime, attachments_json, published_date, created_at
+          FROM studio_media
+          WHERE is_active = 1
+        `;
+        const params = [];
+        if (kind && ALLOWED_STUDIO_KINDS.has(kind)) {
+          query += ` AND media_kind = ?`;
+          params.push(kind);
+        }
+        query += ` ORDER BY published_date DESC, created_at DESC`;
+
+        const stmt = env.DB.prepare(query);
+        const { results } = params.length ? await stmt.bind(...params).all() : await stmt.all();
+        const items = (results || []).map(normaliseStudioMediaRow);
+        return json({ ok: true, items });
+      }
+
+      if (path === '/api/admin/studio-media/status' && method === 'GET') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses pentadbir diperlukan.' }, 403);
+        }
+
+        let dbReady = false;
+        let dbError = null;
+        try {
+          await ensureStudioMediaTable(env);
+          await env.DB.prepare(`SELECT COUNT(*) AS total FROM studio_media`).first();
+          dbReady = true;
+        } catch (err) {
+          dbError = err?.message || 'Jadual studio_media gagal diakses.';
+        }
+
+        return json({
+          ok: true,
+          hasMediaBucket: Boolean(env.MEDIA_BUCKET),
+          dbReady,
+          dbError,
+          maxUploadMB: Math.round(MAX_ANNOUNCEMENT_MEDIA_BYTES / (1024 * 1024)),
+          maxFiles: MAX_ATTACHMENTS_PER_POST
+        });
+      }
+
+      if (path === '/api/admin/studio-media' && method === 'POST') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses ditolak: Sila log masuk sebagai Admin atau Second Admin.' }, 403);
+        }
+
+        await ensureStudioMediaTable(env);
+
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ ok: false, error: 'Format JSON tidak sah.' }, 400);
+        }
+
+        const id = crypto.randomUUID();
+        const title = String(body.title || '').trim().slice(0, 200);
+        const mediaKind = String(body.media_kind || 'tilawah_audio').trim();
+        const reciterOrSource = String(body.reciter_or_source || '').trim().slice(0, 140);
+        const description = String(body.description || '').trim().slice(0, 10000);
+        const rawDate = String(body.published_date || '').trim();
+        const publishedDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+          ? rawDate
+          : new Date().toISOString().slice(0, 10);
+
+        if (!title) {
+          return json({ ok: false, error: 'Tajuk siaran atau surah wajib diisi.' }, 400);
+        }
+        if (!ALLOWED_STUDIO_KINDS.has(mediaKind)) {
+          return json({ ok: false, error: 'Jenis media tidak sah.' }, 400);
+        }
+
+        const rawYoutubeUrl = String(body.youtube_url || '').trim();
+        let youtubeUrl = null;
+        let youtubeId = null;
+        if (rawYoutubeUrl) {
+          const yt = extractYouTubeId(rawYoutubeUrl);
+          if (!yt) {
+            return json({
+              ok: false,
+              error: 'Pautan YouTube tidak sah. Sila gunakan pautan seperti https://www.youtube.com/watch?v=... atau https://youtu.be/...'
+            }, 400);
+          }
+          youtubeUrl = yt.canonicalUrl;
+          youtubeId = yt.youtubeId;
+        }
+
+        const incomingAttachments = Array.isArray(body.attachments) ? body.attachments : [];
+        const cleanAttachments = [];
+        const uploadedKeysToCleanup = [];
+
+        for (const item of incomingAttachments.slice(0, MAX_ATTACHMENTS_PER_POST)) {
+          if (!item || typeof item.key !== 'string') continue;
+          const candidateKey = item.key.trim();
+          if (!isAllowedMediaKey(candidateKey)) {
+            return json({ ok: false, error: 'Rujukan key lampiran tidak sah.' }, 400);
+          }
+          const fname = String(item.filename || 'lampiran').slice(0, 180);
+          const fmime = String(item.mime || 'application/octet-stream').slice(0, 120);
+          const ftype = String(item.type || detectMediaCategory(fmime, fname));
+          cleanAttachments.push({ key: candidateKey, filename: fname, mime: fmime, type: ftype });
+          uploadedKeysToCleanup.push(candidateKey);
+        }
+
+        if (mediaKind === 'youtube_video' && !youtubeId && cleanAttachments.length === 0) {
+          return json({
+            ok: false,
+            error: 'Sila masukkan pautan Video YouTube atau muat naik fail video.'
+          }, 400);
+        }
+
+        if ((mediaKind === 'tilawah_audio' || mediaKind === 'notebook_audio') && cleanAttachments.length === 0 && !youtubeId) {
+          return json({
+            ok: false,
+            error: 'Sila muat naik sekurang-kurangnya satu fail audio atau sertakan pautan YouTube.'
+          }, 400);
+        }
+
+        const primaryAtt = cleanAttachments[0] || null;
+        const attachmentsJson = cleanAttachments.length ? JSON.stringify(cleanAttachments) : null;
+
+        try {
+          await env.DB.prepare(`
+            INSERT INTO studio_media (
+              id, title, media_kind, reciter_or_source, description, youtube_url, youtube_id,
+              media_key, media_filename, media_mime, attachments_json, published_date, created_by
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            id,
+            title,
+            mediaKind,
+            reciterOrSource,
+            description,
+            youtubeUrl,
+            youtubeId,
+            primaryAtt ? primaryAtt.key : null,
+            primaryAtt ? primaryAtt.filename : null,
+            primaryAtt ? primaryAtt.mime : null,
+            attachmentsJson,
+            publishedDate,
+            member.email
+          ).run();
+        } catch (dbErr) {
+          console.error('D1 insert studio_media error:', dbErr);
+          if (env.MEDIA_BUCKET) {
+            for (const k of uploadedKeysToCleanup) {
+              await env.MEDIA_BUCKET.delete(k).catch(() => {});
+            }
+          }
+          return json({
+            ok: false,
+            error: `Gagal menyimpan rekod ke D1 studio_media: ${dbErr?.message || 'Ralat D1'}`
+          }, 500);
+        }
+
+        await logAudit(env, member.id, 'CREATE_STUDIO_MEDIA', 'studio_media', id, {
+          title,
+          mediaKind,
+          youtubeId,
+          fileCount: cleanAttachments.length
+        });
+        return json({ ok: true, id });
+      }
+
+      if (path.startsWith('/api/admin/studio-media/') && method === 'DELETE') {
+        const member = await getCurrentMember(request, env);
+        if (!member || (member.role !== 'admin' && member.role !== 'secondary_admin')) {
+          return json({ ok: false, error: 'Akses ditolak.' }, 403);
+        }
+
+        await ensureStudioMediaTable(env);
+        const id = path.replace('/api/admin/studio-media/', '').trim();
+        const existing = await env.DB.prepare(
+          `SELECT media_key, attachments_json FROM studio_media WHERE id = ?`
+        ).bind(id).first();
+
+        if (existing && env.MEDIA_BUCKET) {
+          const keysToDelete = new Set();
+          if (existing.media_key) keysToDelete.add(existing.media_key);
+          if (existing.attachments_json) {
+            try {
+              const parsed = JSON.parse(existing.attachments_json);
+              if (Array.isArray(parsed)) {
+                parsed.forEach((a) => {
+                  if (a && typeof a.key === 'string') keysToDelete.add(a.key);
+                });
+              }
+            } catch {}
+          }
+          for (const k of keysToDelete) {
+            await env.MEDIA_BUCKET.delete(k).catch(() => {});
+          }
+        }
+
+        await env.DB.prepare(`DELETE FROM studio_media WHERE id = ?`).bind(id).run();
+        await logAudit(env, member.id, 'DELETE_STUDIO_MEDIA', 'studio_media', id, {});
         return json({ ok: true });
       }
 
